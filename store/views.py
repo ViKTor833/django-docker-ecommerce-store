@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.models import Group
+from django.db.models import Q
 from django.shortcuts import render, redirect
 
 from store.forms import ChangePasswordForm, SignUpForm, UpdateUserForm, CustomerForm, ProductForm
@@ -10,6 +11,20 @@ from store.models import Product, Customer, Seller
 # Create your views here.
 def home(request):
     products = Product.objects.all()
+    filter_type = request.GET.get('filter_type', '')
+    search_field = request.GET.get('search_field')
+    if filter_type == 'newest':
+        products = products.order_by('-created_at')
+    elif filter_type == 'oldest':
+        products = products.order_by('created_at')
+    elif filter_type == 'popular':
+        # Not implemented
+        products = products.order_by('-created_at')
+    else:
+        # Default
+        products = products.order_by('-created_at')
+    if search_field is not None:
+        products = products.filter(Q(name__icontains=search_field) | Q(description__icontains=search_field))
     context = {'products': products}
 
     return render(request, 'store/home.html', context)
