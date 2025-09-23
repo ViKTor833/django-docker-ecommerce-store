@@ -1,0 +1,25 @@
+{% extends 'store/index.html' %}
+
+
+{% block content %}
+<div class="container d-block">
+    <form method="post" action="{% url 'update_user' %}">
+        {% csrf_token %}
+
+        {{form.as_p}}
+        <br>
+        <div class="row ">
+
+            <button type="submit" class="btn btn-primary ">Update</button>
+
+        </div>
+        <br>
+    </form>
+    <br>
+    <div class="row">
+        <a href="{% url 'change_password' %}" class="btn btn-secondary ">Update Password</a>
+    </div>
+
+    <br>
+</div>
+{% endblock %}

@@ -3,7 +3,7 @@ from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.models import Group
 from django.shortcuts import render, redirect
 
-from store.forms import ChangePasswordForm, SignUpForm
+from store.forms import ChangePasswordForm, SignUpForm, UpdateUserForm, CustomerForm
 from store.models import Product, Customer, Seller
 
 
@@ -100,3 +100,42 @@ def change_password(request):
         form = ChangePasswordForm(current_user)
 
     return render(request, 'store/change_password_form.html', {'form': form})
+
+def update_user(request):
+    if not request.user.is_authenticated:
+        messages.error(request, 'You must be logged in to do that.')
+        return redirect('login')
+
+    current_user = get_user_model().objects.get(id=request.user.id)
+    form = UpdateUserForm(request.POST or None, instance=current_user)
+
+    if form.is_valid():
+        form.save()
+        login(request, current_user)
+        messages.success(request, 'You have successfully updated your user account.')
+        return redirect('home')
+    return render(request, 'store/update_user_form.html', {'form': form})
+
+
+def update_user_profile(request):
+    if not request.user.is_authenticated:
+        messages.error(request, 'You must be logged in to do that.')
+        return redirect('login')
+
+    current_user_profile = None
+    current_user = get_user_model().objects.get(id=request.user.id)
+    if current_user.user_type == 'S':
+        current_user_profile = Seller.objects.get(user=request.user)
+    elif current_user.user_type == 'C':
+        current_user_profile = Customer.objects.get(user=request.user)
+    else:
+        messages.error(request, "You are not a customer or seller")
+        return redirect('home')
+    form = CustomerForm(request.POST or None, instance=current_user_profile)
+
+    if form.is_valid():
+        form.save()
+        login(request, current_user)
+        messages.success(request, 'You have successfully updated your profile.')
+        return redirect('home')
+    return render(request, 'store/update_user_profile_form.html', {'form': form})

@@ -16,8 +16,8 @@
                     <a class="nav-link dropdown-toggle" id="navbarDropdown1" href="#" role="button"
                        data-bs-toggle="dropdown" aria-expanded="false">Update User Information</a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <li><a class="dropdown-item" href="#">Update User</a></li>
-                        <li><a class="dropdown-item" href="#">Update Profile</a></li>
+                        <li><a class="dropdown-item" href="{% url 'update_user' %}">Update User</a></li>
+                        <li><a class="dropdown-item" href="{% url 'update_user_profile' %}">Update Profile</a></li>
                     </ul>
                 </li>
                 {% endif %}
