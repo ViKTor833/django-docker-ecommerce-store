@@ -4,7 +4,7 @@ from django.db.models import Q
 from django.shortcuts import render, redirect
 
 from store.forms import ChangePasswordForm, SignUpForm, UpdateUserForm, CustomerForm, ProductForm
-from store.models import Product, Customer, Seller, Category
+from store.models import Product, Customer, Seller, Category, Cart, CartItem
 
 
 # Create your views here.
@@ -29,7 +29,6 @@ def home(request):
         products = products.order_by('-created_at')
     if search_field is not None:
         products = products.filter(Q(name__icontains=search_field) | Q(description__icontains=search_field))
-
 
     context = {'products': products}
 
@@ -245,3 +244,61 @@ def list_categories(request):
     categories = Category.objects.all()
     context = {'categories': categories}
     return render(request, 'store/list_categories.html', context)
+
+
+# Cart views
+def add_product_to_cart(request, pk):
+    if not request.user.is_authenticated:
+        messages.error(request, 'You must be logged in to do that.')
+        return redirect('login')
+
+    if not request.user.user_type == 'C':
+        messages.error(request, 'Only available for Customer accounts')
+        return redirect('home')
+
+    if request.method == 'POST':
+        customer = Customer.objects.get(user=request.user)
+        if not Cart.objects.filter(created_by_customer=customer).exists():
+            Cart.objects.create(created_by_customer=customer)
+
+        product = Product.objects.get(id=pk)
+
+        quantity = request.POST.get("productQuantity")
+        cartItem, created = CartItem.objects.get_or_create(cart=customer.cart, productItem=product)
+        cartItem.quantity = int(quantity)
+        cartItem.save()
+        return redirect('home')
+    else:
+        messages.error(request, 'You do not have permission to add a new product')
+        return redirect('home')
+
+
+def show_cart(request):
+    if not request.user.is_authenticated:
+        messages.error(request, 'You must be logged in to do that.')
+        return redirect('login')
+
+    if not request.user.user_type == 'C':
+        messages.error(request, 'Only available for Customer accounts')
+        return redirect('home')
+
+    customer = Customer.objects.get(user=request.user)
+    if not Cart.objects.filter(created_by_customer=customer).exists():
+        Cart.objects.create(created_by_customer=customer)
+
+    cart = Cart.objects.get(created_by_customer=customer)
+    items = cart.items.all()
+    total = 0
+    for item in items:
+        total += item.productItem.price
+
+    return render(request, 'store/show_cart.html', {'cart': cart, 'items': items, 'total': total})
+
+def delete_item(request, pk):
+    if not request.user.is_authenticated:
+        messages.error(request, 'You must be logged in to do that.')
+        return redirect('login')
+    customer = Customer.objects.get(user=request.user)
+    cart = Cart.objects.get(created_by_customer=customer)
+    CartItem.objects.get(cart=cart, productItem=Product.objects.get(pk=pk)).delete()
+    return redirect('show_cart')
