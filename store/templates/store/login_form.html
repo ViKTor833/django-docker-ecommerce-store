@@ -1,0 +1,32 @@
+{% extends 'store/index.html' %}
+
+{% block content %}
+<div class="container ">
+    <form class="form-control-lg" method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+        <div class="row ">
+            <div class="col">
+                <input type="text" name="username" placeholder="Enter your username">
+            </div>
+        </div>
+        <br>
+        <div class="row">
+            <div class="col">
+                <input type="password" name="password" placeholder="Enter your password">
+            </div>
+        </div>
+        <br>
+        <div class="row ">
+            <div class="col-2">
+                <button type="submit" class="btn btn-primary ">Login</button>
+            </div>
+        </div>
+        <br>
+    </form>
+    <div class="row ">
+        <div class="col">
+            Don't have an account <a href="{% url 'register' %}">Register here</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

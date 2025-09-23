@@ -1,0 +1,26 @@
+{% extends 'store/index.html' %}
+
+{% block content %}
+<div class="container d-block">
+    <form method="post" action="{% url 'register' %}">
+        {% csrf_token %}
+
+        {{form.as_p}}
+        <div class="btn-group">
+            <input id="customerType" type="radio" class="btn-check" name="userType" value="Customer" autocomplete="off">
+            <label for="customerType" class="btn btn-outline-primary">Customer</label>
+            <input id="sellerType" type="radio" class="btn-check" name="userType" value="Seller" autocomplete="off">
+            <label for="sellerType" class="btn btn-outline-primary">Seller</label>
+        </div>
+
+        <br>
+        <div class="row p-5">
+
+            <button type="submit" class="btn btn-primary ">Register</button>
+
+        </div>
+        <br>
+    </form>
+
+</div>
+{% endblock %}
