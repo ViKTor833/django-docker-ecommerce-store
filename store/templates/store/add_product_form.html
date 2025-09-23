@@ -1,0 +1,16 @@
+{% extends 'store/index.html' %}
+
+{% block content %}
+<div class="container d-block">
+    <form method="post" action="{% url 'add_product' %}">
+        {% csrf_token %}
+
+        {{form.as_p}}
+        <br>
+        <div class="row p-5">
+            <button type="submit" class="btn btn-primary ">Add product</button>
+        </div>
+        <br>
+    </form>
+</div>
+{% endblock %}

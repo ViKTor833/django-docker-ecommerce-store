@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm, SetPasswordForm
 from django import forms
 
-from store.models import Customer, Seller
+from store.models import Customer, Seller, Product
 
 
 class SignUpForm(UserCreationForm):
@@ -40,6 +40,7 @@ class ChangePasswordForm(SetPasswordForm):
             if not isinstance(field.widget, forms.CheckboxInput):
                 field.widget.attrs['class'] = 'form-control'
 
+
 class CustomerForm(forms.ModelForm):
     class Meta:
         model = Customer
@@ -59,6 +60,18 @@ class SellerForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(SellerForm, self).__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            if not isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs['class'] = 'form-control'
+
+
+class ProductForm(forms.ModelForm):
+    class Meta:
+        model = Product
+        exclude = ('created_by_seller',)
+
+    def __init__(self, *args, **kwargs):
+        super(ProductForm, self).__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
             if not isinstance(field.widget, forms.CheckboxInput):
                 field.widget.attrs['class'] = 'form-control'

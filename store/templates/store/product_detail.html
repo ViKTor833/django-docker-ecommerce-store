@@ -17,6 +17,37 @@
                 </div>
                 <p class="lead"><small>Description:</small><br>{{ product.description }}</p>
                 <br>
+                {% if request.user.user_type == 'C' %}
+                <form method="get" action="#">
+                    <div class="d-flex">
+                        <input class="form-control text-center me-3" id="productQuantity" name="productQuantity"
+                               type="number" value="1"
+                               style="max-width: 3rem"/>
+                        <button class="btn btn-outline-dark flex-shrink-0" type="submit">
+                            <i class="bi-cart-fill me-1"></i>
+                            Add to cart
+                        </button>
+
+                    </div>
+                </form>
+                {% endif %}
+                <br>
+                {% if request.user.user_type == 'S' and request.user == seller %}
+                <div class="row d-flex">
+                    <div class="col-2">
+                        <a type="button" class="btn btn-secondary" href="{% url 'edit_product' product.id %}">Edit</a>
+                    </div>
+                    <div class="col">
+                        <form method="post" action="{% url 'delete_product' product.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">Delete
+                            </button>
+                        </form>
+                        <!--                        add reverse url for back-->
+                    </div>
+                </div>
+                {% endif %}
+
             </div>
         </div>
     </div>

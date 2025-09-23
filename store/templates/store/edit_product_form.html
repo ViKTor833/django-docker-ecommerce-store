@@ -1,0 +1,21 @@
+{% extends 'store/index.html' %}
+
+{% block content %}
+<div class="container d-block">
+    <form method="post">
+        {% csrf_token %}
+
+        {{form.as_p}}
+        <br>
+        <div class="row p-5">
+            <button type="submit" class="btn btn-primary ">Edit product</button>
+        </div>
+        <br>
+    </form>
+    <div class="row pb-3">
+        <div class="col">
+            <a class="btn btn-secondary" href="{{ request.META.HTTP_REFERER }}">Back</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

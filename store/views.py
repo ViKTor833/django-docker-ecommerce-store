@@ -3,7 +3,7 @@ from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.models import Group
 from django.shortcuts import render, redirect
 
-from store.forms import ChangePasswordForm, SignUpForm, UpdateUserForm, CustomerForm
+from store.forms import ChangePasswordForm, SignUpForm, UpdateUserForm, CustomerForm, ProductForm
 from store.models import Product, Customer, Seller
 
 
@@ -15,12 +15,72 @@ def home(request):
     return render(request, 'store/home.html', context)
 
 
+# Product Views
 def product_detail(request, pk):
     product = Product.objects.get(pk=pk)
     related_products = Product.objects.filter(category=product.category).exclude(id=pk)
-
-    context = {'product': product, 'related_products': related_products}
+    seller = Seller.objects.get(pk=product.created_by_seller.pk)
+    context = {'product': product, 'related_products': related_products, 'seller': seller.user}
     return render(request, 'store/product_detail.html', context)
+
+
+def add_product(request):
+    if not request.user.is_authenticated:
+        messages.error(request, 'You must be logged in to do that.')
+        return redirect('login')
+    if not request.user.user_type == 'S':
+        messages.error(request, 'Only available for Seller accounts')
+        return redirect('home')
+
+    form = ProductForm()
+    if request.method == 'POST':
+        form = ProductForm(request.POST)
+        if form.is_valid():
+            product = form.save(commit=False)
+            seller = Seller.objects.get(user=request.user)
+            product.created_by_seller = seller
+            product.save()
+            return redirect('home')
+        else:
+            messages.error(request, 'Invalid New Product')
+            render(request, 'store/add_product_form.html', {'form': form})
+
+    return render(request, 'store/add_product_form.html', {'form': form})
+
+
+def edit_product(request, pk):
+    if not request.user.is_authenticated:
+        messages.error(request, 'You must be logged in to do that.')
+        return redirect('login')
+    if not request.user.user_type == 'S':
+        messages.error(request, 'Only available for Seller accounts')
+        return redirect('home')
+
+    product = Product.objects.get(id=pk)
+
+    seller = Seller.objects.get(user=request.user)
+
+    if not product.created_by_seller == seller:
+        messages.error(request, 'You do not have permission to edit this product.')
+        return redirect('home')
+
+    form = ProductForm(request.POST or None, instance=product)
+    if request.method == 'POST':
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'You have successfully updated your product.')
+            return redirect('home')
+        else:
+            messages.error(request, 'Cannot edit Product')
+            return render(request, 'store/edit_product_form.html', {'form': form})
+
+    return render(request, 'store/edit_product_form.html', {'form': form})
+
+
+def delete_product(request, pk):
+    product = Product.objects.get(pk=pk)
+    product.delete()
+    return redirect('home')
 
 
 # Authentication
@@ -100,6 +160,7 @@ def change_password(request):
         form = ChangePasswordForm(current_user)
 
     return render(request, 'store/change_password_form.html', {'form': form})
+
 
 def update_user(request):
     if not request.user.is_authenticated:
