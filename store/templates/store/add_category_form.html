@@ -1,0 +1,27 @@
+{% extends 'store/index.html' %}
+
+{% block content %}
+<div class="container ">
+    <form class="form-control-lg" method="post" action="{% url 'add_category' %}">
+        {% csrf_token %}
+        <div class="row ">
+            <div class="col">
+                <input type="text" name="category_name" placeholder="Enter category name">
+            </div>
+        </div>
+        <br>
+        <div class="row ">
+            <div class="col-2">
+                <button type="submit" class="btn btn-primary ">Add Category</button>
+            </div>
+        </div>
+        <br>
+        <div class="row pb-3">
+        <div class="col">
+            <a class="btn btn-secondary" href="{{ request.META.HTTP_REFERER }}">Back</a>
+        </div>
+    </div>
+    </form>
+
+</div>
+{% endblock %}

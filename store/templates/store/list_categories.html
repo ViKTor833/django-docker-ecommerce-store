@@ -1,0 +1,35 @@
+{% extends 'store/index.html' %}
+
+
+{% block content%}
+<section class="py-5">
+
+    <div class="container px-4 px-lg-5 mt-4">
+        <div class="row pb-4 ">
+            <h2>Select Categories to filter By</h2>
+
+        </div>
+        <form method="get" action="{% url 'home' %}">
+            <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
+                {% for category in categories %}
+                <div class="col mb-5">
+                    <div class="card text-black bg-light">
+                        <div class="card-body ">
+                            {{ category.name }} <input type="checkbox" class="form-check-input "
+                                                       value="{{ category.id }}" name="filter_categories">
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="row">
+                <div class="col">
+                    <button type="submit" class="btn btn-dark">Filter</button>
+
+                </div>
+            </div>
+        </form>
+    </div>
+</section>
+
+{% endblock %}

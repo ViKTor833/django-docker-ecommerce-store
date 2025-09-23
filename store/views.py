@@ -1,11 +1,10 @@
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, get_user_model
-from django.contrib.auth.models import Group
 from django.db.models import Q
 from django.shortcuts import render, redirect
 
 from store.forms import ChangePasswordForm, SignUpForm, UpdateUserForm, CustomerForm, ProductForm
-from store.models import Product, Customer, Seller
+from store.models import Product, Customer, Seller, Category
 
 
 # Create your views here.
@@ -13,6 +12,11 @@ def home(request):
     products = Product.objects.all()
     filter_type = request.GET.get('filter_type', '')
     search_field = request.GET.get('search_field')
+    filter_categories = request.GET.getlist('filter_categories')
+
+    if filter_categories.__len__() != 0:
+        products = products.filter(category__in=filter_categories)
+
     if filter_type == 'newest':
         products = products.order_by('-created_at')
     elif filter_type == 'oldest':
@@ -25,6 +29,8 @@ def home(request):
         products = products.order_by('-created_at')
     if search_field is not None:
         products = products.filter(Q(name__icontains=search_field) | Q(description__icontains=search_field))
+
+
     context = {'products': products}
 
     return render(request, 'store/home.html', context)
@@ -215,3 +221,27 @@ def update_user_profile(request):
         messages.success(request, 'You have successfully updated your profile.')
         return redirect('home')
     return render(request, 'store/update_user_profile_form.html', {'form': form})
+
+
+# Category Views
+
+def add_category(request):
+    if not request.user.is_authenticated:
+        messages.error(request, 'You must be logged in to do that.')
+        return redirect('login')
+    if not request.user.user_type == 'A':
+        messages.error(request, 'You do not have permission to add a new category')
+        return redirect('home')
+
+    if request.method == 'POST':
+        category_name = request.POST['category_name']
+        Category.objects.create(name=category_name)
+        return redirect('home')
+    elif request.method == 'GET':
+        return render(request, 'store/add_category_form.html')
+
+
+def list_categories(request):
+    categories = Category.objects.all()
+    context = {'categories': categories}
+    return render(request, 'store/list_categories.html', context)

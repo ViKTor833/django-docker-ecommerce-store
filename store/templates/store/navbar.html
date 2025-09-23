@@ -17,7 +17,20 @@
                        data-bs-toggle="dropdown" aria-expanded="false">Update User Information</a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                         <li><a class="dropdown-item" href="{% url 'update_user' %}">Update User</a></li>
+                        {% if request.user.user_type != 'A' %}
                         <li><a class="dropdown-item" href="{% url 'update_user_profile' %}">Update Profile</a></li>
+                        {% endif %}
+                    </ul>
+                </li>
+                {% endif %}
+
+                {% if request.user.is_authenticated and request.user.user_type == 'A' %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" id="navbarDropdown2" href="#" role="button"
+                       data-bs-toggle="dropdown" aria-expanded="false">Review</a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <li><a class="dropdown-item" href="{% url 'add_category' %}">Add Category</a></li>
+                        <li><a class="dropdown-item" href="#">View All Orders</a></li>
                     </ul>
                 </li>
                 {% endif %}
@@ -25,25 +38,20 @@
                 {% if request.user.user_type == 'C' %}
                 <li class="nav-item"><a class="nav-link" href="{% url 'show_orders' %}">My Orders</a></li>
                 {% elif request.user.user_type == 'S' %}
-                <li class="nav-item"><a class="nav-link" href="{% url 'add_product' %}">Add New Product</a></li>
-                <li class="nav-item"><a class="nav-link" href="#">View My Products</a>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" id="navbarDropdown3" href="#" role="button"
+                       data-bs-toggle="dropdown" aria-expanded="false">Products</a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <li class="nav-item"><a class="nav-link" href="{% url 'add_product' %}">Add New Product</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#">View My Products</a></li>
+                    </ul>
                 </li>
                 {% endif %}
-
-                {% if categories %}
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button"
-                       data-bs-toggle="dropdown" aria-expanded="false">Categories</a>
-                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <li><a class="dropdown-item" href="#">All Products</a></li>
-                        <li>
-                            <hr class="dropdown-divider"/>
-                        </li>
-                        {% for category in categories %}
-                        <li><a class="dropdown-item" href="#">{{ category.name }}</a></li>
-                        {% endfor %}
-
-                    </ul>
+                <li class="nav-item"><a class="nav-link" href="{% url 'list_categories' %}">Categories</a></li>
+            </ul>
+            <ul class="navbar-nav  mb-2 mb-lg-0 ms-lg-4">
+                {% if user.is_authenticated %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'update_user' %}"><h4>{{ user.username }}</h4></a>
                 </li>
                 {% endif %}
             </ul>
