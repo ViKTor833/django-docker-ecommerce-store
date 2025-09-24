@@ -103,6 +103,18 @@ def delete_product(request, pk):
     return redirect('home')
 
 
+def view_created_products(request):
+    if not request.user.is_authenticated:
+        messages.error(request, 'You must be logged in to do that.')
+        return redirect('login')
+    if not request.user.user_type == 'S':
+        messages.error(request, 'Only available for Customer accounts')
+        return redirect('home')
+
+    seller = Seller.objects.get(user=request.user)
+    return render(request, "store/view_created_products.html", {'products': seller.all_products.all()})
+
+
 # Authentication
 def register_user(request):
     form = SignUpForm()
