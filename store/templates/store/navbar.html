@@ -30,7 +30,7 @@
                        data-bs-toggle="dropdown" aria-expanded="false">Review</a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                         <li><a class="dropdown-item" href="{% url 'add_category' %}">Add Category</a></li>
-                        <li><a class="dropdown-item" href="#">View All Orders</a></li>
+                        <li><a class="dropdown-item" href="{% url 'show_all_orders' %}">View All Orders</a></li>
                     </ul>
                 </li>
                 {% endif %}

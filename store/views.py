@@ -317,6 +317,7 @@ def delete_item(request, pk):
     return redirect('show_cart')
 
 
+# Order views
 def checkout_order(request):
     if not request.user.is_authenticated:
         messages.error(request, 'You must be logged in to do that.')
@@ -357,7 +358,7 @@ def show_order_detail(request, pk):
     if not request.user.is_authenticated:
         messages.error(request, 'You must be logged in to do that.')
         return redirect('login')
-    if not request.user.user_type == 'C':
+    if not (request.user.user_type == 'C' or request.user.user_type == 'A'):
         messages.error(request, 'Only available for Customer accounts')
         return redirect('home')
 
@@ -368,3 +369,14 @@ def show_order_detail(request, pk):
 
     context = {'order': order, 'total_price': total_price}
     return render(request, 'store/show_order_detail.html', context)
+
+
+def show_all_orders(request):
+    if not request.user.is_authenticated:
+        messages.error(request, 'You must be logged in to do that.')
+        return redirect('login')
+    if not request.user.user_type == 'A':
+        messages.error(request, 'Only available for Admin accounts')
+        return redirect('home')
+    orders = Order.objects.all()
+    return render(request, 'store/show_orders.html', {'orders': orders})

@@ -10,6 +10,9 @@
             <th scope="col">id</th>
             <th scope="col">Date</th>
             <th scope="col">Status</th>
+            {% if request.user.user_type == 'A' %}
+            <th scope="col">Created by</th>
+            {% endif %}
             <th scope="col">*</th>
         </tr>
         </thead>
@@ -19,6 +22,9 @@
             <th scope="row">{{ order.id }}</th>
             <td>{{ order.placed_at }}</td>
             <td>{{ order.payment_status }}</td>
+            {% if request.user.user_type == 'A' %}
+            <td>{{ order.customer }}</td>
+            {% endif %}
             <td><a href="{% url 'show_order_detail' order.id %}">View</a></td>
         </tr>
         {% endfor %}
