@@ -36,7 +36,7 @@
                 {% endif %}
 
                 {% if request.user.user_type == 'C' %}
-                <li class="nav-item"><a class="nav-link" href="#">My Orders</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'show_orders' %}">My Orders</a></li>
                 {% elif request.user.user_type == 'S' %}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" id="navbarDropdown3" href="#" role="button"

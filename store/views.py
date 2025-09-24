@@ -4,7 +4,7 @@ from django.db.models import Q
 from django.shortcuts import render, redirect
 
 from store.forms import ChangePasswordForm, SignUpForm, UpdateUserForm, CustomerForm, ProductForm
-from store.models import Product, Customer, Seller, Category, Cart, CartItem
+from store.models import Product, Customer, Seller, Category, Cart, CartItem, Order, OrderItem
 
 
 # Create your views here.
@@ -294,6 +294,7 @@ def show_cart(request):
 
     return render(request, 'store/show_cart.html', {'cart': cart, 'items': items, 'total': total})
 
+
 def delete_item(request, pk):
     if not request.user.is_authenticated:
         messages.error(request, 'You must be logged in to do that.')
@@ -302,3 +303,56 @@ def delete_item(request, pk):
     cart = Cart.objects.get(created_by_customer=customer)
     CartItem.objects.get(cart=cart, productItem=Product.objects.get(pk=pk)).delete()
     return redirect('show_cart')
+
+
+def checkout_order(request):
+    if not request.user.is_authenticated:
+        messages.error(request, 'You must be logged in to do that.')
+        return redirect('login')
+
+    if not request.user.user_type == 'C':
+        messages.error(request, 'Only available for Customer accounts')
+        return redirect('home')
+
+    customer = Customer.objects.get(user=request.user)
+    cart = Cart.objects.get(created_by_customer=customer)
+
+    order = Order.objects.create(customer=customer)
+    items = cart.items.all()
+
+    for item in items:
+        OrderItem.objects.create(order=order, product=item.productItem, quantity=item.quantity,
+                                 price=item.productItem.price)
+
+    cart.delete()
+    return redirect('home')
+
+
+def show_orders(request):
+    if not request.user.is_authenticated:
+        messages.error(request, 'You must be logged in to do that.')
+        return redirect('login')
+    if not request.user.user_type == 'C':
+        messages.error(request, 'Only available for Customer accounts')
+        return redirect('home')
+
+    customer = Customer.objects.get(user=request.user)
+    orders = customer.orders.all()
+    return render(request, 'store/show_orders.html', {'orders': orders})
+
+
+def show_order_detail(request, pk):
+    if not request.user.is_authenticated:
+        messages.error(request, 'You must be logged in to do that.')
+        return redirect('login')
+    if not request.user.user_type == 'C':
+        messages.error(request, 'Only available for Customer accounts')
+        return redirect('home')
+
+    order = Order.objects.prefetch_related('items').get(id=pk)
+    total_price = 0
+    for item in order.items.all():
+        total_price += item.price * item.quantity
+
+    context = {'order': order, 'total_price': total_price}
+    return render(request, 'store/show_order_detail.html', context)

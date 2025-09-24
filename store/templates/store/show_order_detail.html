@@ -1,0 +1,36 @@
+<{% extends 'store/index.html' %}
+
+
+{% block content %}
+<div class="container  px-4 px-lg-5 mt-4 d-block">
+    <div class="row p-3 m-3">
+        <div class="col-4">
+            <h3>Order placed by: {{ order.customer }}</h3>
+        </div>
+        <div class="col-4">
+            <p>Date Created: {{ order.placed_at }}</p>
+        </div>
+        <div class="col-2">
+            Status: {% if order.payment_status == 'P' %} Pending {% elif order.payment_status == 'C' %} Completed {%
+            else %} Failed {% endif %}
+        </div>
+         <div class="col-2">
+            Total : {{ total_price }}
+        </div>
+
+
+    </div>
+    <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
+        {% for item in order.items.all %}
+        <div class="col mb-5">
+            <div class="card text-black bg-light">
+                <div class="card-body ">
+                    Product Name: {{ item.product.name }}<br> Quantity: {{ item.quantity }}<br> Price: {{ item.price }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

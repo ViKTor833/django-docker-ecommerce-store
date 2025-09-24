@@ -1,0 +1,29 @@
+<{% extends 'store/index.html' %}
+
+
+{% block content %}
+<div class="container d-block">
+
+    <table class="table">
+        <thead class="thead-light">
+        <tr>
+            <th scope="col">id</th>
+            <th scope="col">Date</th>
+            <th scope="col">Status</th>
+            <th scope="col">*</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for order in orders %}
+        <tr>
+            <th scope="row">{{ order.id }}</th>
+            <td>{{ order.placed_at }}</td>
+            <td>{{ order.payment_status }}</td>
+            <td><a href="{% url 'show_order_detail' order.id %}">View</a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+{% endblock %}
