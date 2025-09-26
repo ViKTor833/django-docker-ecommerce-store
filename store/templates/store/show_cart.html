@@ -14,7 +14,6 @@
                         <img class="card-img-left" src="https://dummyimage.com/450x300/dee2e6/6c757d.jpg" alt="..."/>
                     </div>
                     <!-- Product details-->
-
                     <div class="col-5 card-body p-4">
                         <div class=" text-center">
                             <!-- Product name-->
@@ -22,7 +21,6 @@
                             <!-- Product price-->
                             ${{ item.productItem.price }}
                             <br>
-
                             <p><small>Category: {{ item.productItem.category}}</small></p>
                             <br>
                             <form method="post" action="{% url 'add_product_to_cart' item.productItem.id %}">
@@ -58,12 +56,8 @@
                                                         href="{% url 'product_detail' item.productItem.id %}">View details</a></div>
                         </div>
                         <br>
-
                         <div class="row">
-
                         </div>
-
-
                     </div>
                 </div>
             </div>
@@ -74,7 +68,6 @@
         <div class="row">
             <div class="col-3">
                 <h4>Total: {{ total }}</h4>
-
             </div>
             <div class="col-">
                 <form method="post" action="{% url 'checkout_order' %}">
@@ -82,7 +75,6 @@
                     <button type="submit" class="btn btn-primary">Checkout</button>
                 </form>
             </div>
-
         </div>
         {% else %}
         <p>No products in your cart</p>

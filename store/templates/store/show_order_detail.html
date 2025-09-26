@@ -17,8 +17,6 @@
          <div class="col-2">
             Total : {{ total_price }}
         </div>
-
-
     </div>
     <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
         {% for item in order.items.all %}
@@ -31,6 +29,5 @@
         </div>
         {% endfor %}
     </div>
-
 </div>
 {% endblock %}
