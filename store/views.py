@@ -136,12 +136,7 @@ def register_user(request):
             user.save()
             user = authenticate(request, username=username, password=password)
             login(request, user)
-            if userType == 'Customer':
-                Customer.objects.create(user=request.user)
-                messages.success(request, 'Customer Account created successfully')
-            elif userType == 'Seller':
-                Seller.objects.create(user=request.user)
-                messages.success(request, 'Seller Account created successfully')
+            messages.success(request, 'You have successfully registered.')
 
             return redirect('home')
         else:
