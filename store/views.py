@@ -2,9 +2,14 @@ from django.contrib import messages
 from django.contrib.auth import login, get_user_model
 from django.db.models import Q
 from django.shortcuts import render, redirect
+from rest_framework import status
+from rest_framework.generics import get_object_or_404
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from store.forms import CustomerForm, ProductForm, SellerForm
 from store.models import Product, Customer, Seller, Category, Cart, CartItem, Order, OrderItem
+from store.serializers import CategorySerializer, CreateProductSerializer, ListProductSerializer
 
 
 # Create your views here.
@@ -287,3 +292,62 @@ def show_all_orders(request):
         return redirect('home')
     orders = Order.objects.all()
     return render(request, 'store/show_orders.html', {'orders': orders})
+
+
+# Api Views
+
+class CategoryList(APIView):
+    def get(self, request):
+        queryset = Category.objects.all()
+        serializer = CategorySerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = CategorySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class CategoryDetail(APIView):
+    def get(self, request, pk):
+        queryset = get_object_or_404(Category, id=pk)
+        serializer = CategorySerializer(queryset)
+        return Response(serializer.data)
+
+    def delete(self, request, pk):
+        queryset = get_object_or_404(Category, id=pk)
+        queryset.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ProductList(APIView):
+    def get(self, request):
+        queryset = Product.objects.all()
+        serializer = ListProductSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = CreateProductSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class ProductDetail(APIView):
+    def get(self, request, pk):
+        queryset = get_object_or_404(Product, id=pk)
+        serializer = ListProductSerializer(queryset)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        queryset = get_object_or_404(Product, id=pk)
+        serializer = CreateProductSerializer(data=request.data, instance=queryset)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def delete(self, request, pk):
+        queryset = get_object_or_404(Product, id=pk)
+        queryset.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
