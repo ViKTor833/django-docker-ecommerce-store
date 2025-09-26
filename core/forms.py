@@ -1,39 +1,39 @@
 from django import forms
+from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm, SetPasswordForm
 
-from store.models import Customer, Seller, Product
 
-
-class CustomerForm(forms.ModelForm):
+class SignUpForm(UserCreationForm):
     class Meta:
-        model = Customer
-        fields = ('birthday', 'phone')
+        model = get_user_model()
+        fields = ('username', 'first_name', 'last_name', 'email', 'password1', 'password2')
 
     def __init__(self, *args, **kwargs):
-        super(CustomerForm, self).__init__(*args, **kwargs)
+        super(SignUpForm, self).__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
             if not isinstance(field.widget, forms.CheckboxInput):
                 field.widget.attrs['class'] = 'form-control'
 
 
-class SellerForm(forms.ModelForm):
+class UpdateUserForm(UserChangeForm):
     class Meta:
-        model = Seller
-        fields = ('phone',)
+        model = get_user_model()
+        fields = ('username', 'first_name', 'last_name', 'email')
 
     def __init__(self, *args, **kwargs):
-        super(SellerForm, self).__init__(*args, **kwargs)
+        super(UpdateUserForm, self).__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
             if not isinstance(field.widget, forms.CheckboxInput):
                 field.widget.attrs['class'] = 'form-control'
 
 
-class ProductForm(forms.ModelForm):
+class ChangePasswordForm(SetPasswordForm):
     class Meta:
-        model = Product
-        exclude = ('created_by_seller',)
+        model = get_user_model()
+        fields = ['new_password1', 'new_password2']
 
     def __init__(self, *args, **kwargs):
-        super(ProductForm, self).__init__(*args, **kwargs)
+        super(ChangePasswordForm, self).__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
             if not isinstance(field.widget, forms.CheckboxInput):
                 field.widget.attrs['class'] = 'form-control'
