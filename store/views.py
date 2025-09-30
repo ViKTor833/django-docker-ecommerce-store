@@ -9,7 +9,8 @@ from rest_framework.views import APIView
 
 from store.forms import CustomerForm, ProductForm, SellerForm
 from store.models import Product, Customer, Seller, Category, Cart, CartItem, Order, OrderItem
-from store.serializers import CategorySerializer, CreateProductSerializer, ListProductSerializer
+from store.serializers import CategorySerializer, CreateProductSerializer, ListProductSerializer, CartSerializer, \
+    UpdateCartSerializer, CartItemSerializer, AddCartItemSerializer, UpdateCartItemSerializer
 
 
 # Create your views here.
@@ -350,4 +351,77 @@ class ProductDetail(APIView):
     def delete(self, request, pk):
         queryset = get_object_or_404(Product, id=pk)
         queryset.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CartList(APIView):
+    # remove later only available for now
+    def get(self, request):
+        carts = Cart.objects.all()
+        serializer = CartSerializer(carts, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        created_by_customer = get_object_or_404(Customer, user=request.user)
+        (cart, created) = Cart.objects.get_or_create(created_by_customer=created_by_customer)
+        serializer = CartSerializer(cart)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class CartDetail(APIView):
+    def get(self, request):
+        created_by_customer = get_object_or_404(Customer, user=request.user)
+        cart = get_object_or_404(Cart.objects.prefetch_related("items__productItem"),
+                                 created_by_customer=created_by_customer)
+        serializer = UpdateCartSerializer(cart)
+        return Response(serializer.data)  # what now?
+
+    def delete(self, request):
+        created_by_customer = get_object_or_404(Customer, user=request.user)
+        cart = get_object_or_404(Cart, created_by_customer=created_by_customer)
+        cart.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CartItemList(APIView):
+
+    def get(self, request):
+        created_by_customer = get_object_or_404(Customer, user=request.user)
+        cart = get_object_or_404(Cart, created_by_customer=created_by_customer)
+        cart_items = CartItem.objects.select_related('productItem').filter(cart=cart)
+        serializer = CartItemSerializer(cart_items, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        created_by_customer = get_object_or_404(Customer, user=request.user)
+        cart = get_object_or_404(Cart, created_by_customer=created_by_customer)
+        serializer = AddCartItemSerializer(data=request.data, context={'cart': cart})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class CartItemDetail(APIView):
+
+    def get(self, request, pk):
+        created_by_customer = get_object_or_404(Customer, user=request.user)
+        cart = get_object_or_404(Cart, created_by_customer=created_by_customer)
+        cart_item = get_object_or_404(CartItem, cart=cart, id=pk)
+        serializer = CartItemSerializer(cart_item)
+        return Response(serializer.data)
+
+    def patch(self, request, pk):
+        created_by_customer = get_object_or_404(Customer, user=request.user)
+        cart = get_object_or_404(Cart, created_by_customer=created_by_customer)
+        cart_item = get_object_or_404(CartItem, cart=cart, id=pk)
+        serializer = UpdateCartItemSerializer(cart_item, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def delete(self, request, pk):
+        created_by_customer = get_object_or_404(Customer, user=request.user)
+        cart = get_object_or_404(Cart, created_by_customer=created_by_customer)
+        cart_item = get_object_or_404(CartItem, cart=cart, id=pk)
+        cart_item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
