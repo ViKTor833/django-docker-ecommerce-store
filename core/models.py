@@ -1,14 +1,15 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 
 # Create your models here.
+class UserType(models.TextChoices):
+    CUSTOMER = "C", _("Customer")
+    SELLER = "S", _("Seller")
+    ADMIN = "A", _("Admin")
+
+
 class User(AbstractUser):
     email = models.EmailField(unique=True)
-    USER_TYPE = [
-        ('A', 'Admin'),
-        ('C', 'Customer'),
-        ('S', 'Seller'),
-    ]
-
-    user_type = models.CharField(max_length=1, choices=USER_TYPE, default=USER_TYPE[1][0])
+    user_type = models.CharField(max_length=1, choices=UserType, default=UserType.CUSTOMER)
