@@ -2,15 +2,20 @@ from django.contrib import messages
 from django.contrib.auth import login, get_user_model
 from django.db.models import Q
 from django.shortcuts import render, redirect
-from rest_framework import status
+from rest_framework import status, permissions
+from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet
 
 from store.forms import CustomerForm, ProductForm, SellerForm
 from store.models import Product, Customer, Seller, Category, Cart, CartItem, Order, OrderItem
+from store.permissions import IsAdminOrReadOnly, IsCustomerUser, IsSellerUser
 from store.serializers import CategorySerializer, CreateProductSerializer, ListProductSerializer, CartSerializer, \
-    UpdateCartSerializer, CartItemSerializer, AddCartItemSerializer, UpdateCartItemSerializer
+    UpdateCartSerializer, CartItemSerializer, AddCartItemSerializer, UpdateCartItemSerializer, CustomerSerializer, \
+    SellerSerializer, OrderSerializer, CreateOderSerializer, UpdateOderSerializer
 
 
 # Create your views here.
@@ -298,6 +303,8 @@ def show_all_orders(request):
 # Api Views
 
 class CategoryList(APIView):
+    permission_classes = [IsAdminOrReadOnly, ]
+
     def get(self, request):
         queryset = Category.objects.all()
         serializer = CategorySerializer(queryset, many=True)
@@ -311,6 +318,8 @@ class CategoryList(APIView):
 
 
 class CategoryDetail(APIView):
+    permission_classes = [IsAdminOrReadOnly, ]
+
     def get(self, request, pk):
         queryset = get_object_or_404(Category, id=pk)
         serializer = CategorySerializer(queryset)
@@ -323,6 +332,14 @@ class CategoryDetail(APIView):
 
 
 class ProductList(APIView):
+    # permissions = [IsAdminOrReadOnly, ]
+
+    def get_permissions(self):
+        if self.request.method in permissions.SAFE_METHODS:
+            return [AllowAny()]
+        elif self.request.method == 'POST':
+            return [IsSellerUser()]
+
     def get(self, request):
         queryset = Product.objects.all()
         serializer = ListProductSerializer(queryset, many=True)
@@ -336,6 +353,8 @@ class ProductList(APIView):
 
 
 class ProductDetail(APIView):
+    permission_classes = [IsAdminOrReadOnly, ]
+
     def get(self, request, pk):
         queryset = get_object_or_404(Product, id=pk)
         serializer = ListProductSerializer(queryset)
@@ -355,6 +374,13 @@ class ProductDetail(APIView):
 
 
 class CartList(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get_permissions(self):
+        if self.request.method == "POST":
+            return [IsCustomerUser()]
+        return [IsAdminUser()]
+
     # remove later only available for now
     def get(self, request):
         carts = Cart.objects.all()
@@ -369,6 +395,8 @@ class CartList(APIView):
 
 
 class CartDetail(APIView):
+    permission_classes = [IsCustomerUser]
+
     def get(self, request):
         created_by_customer = get_object_or_404(Customer, user=request.user)
         cart = get_object_or_404(Cart.objects.prefetch_related("items__productItem"),
@@ -384,6 +412,7 @@ class CartDetail(APIView):
 
 
 class CartItemList(APIView):
+    permission_classes = [IsCustomerUser]
 
     def get(self, request):
         created_by_customer = get_object_or_404(Customer, user=request.user)
@@ -402,6 +431,7 @@ class CartItemList(APIView):
 
 
 class CartItemDetail(APIView):
+    permission_classes = [IsCustomerUser]
 
     def get(self, request, pk):
         created_by_customer = get_object_or_404(Customer, user=request.user)
@@ -425,3 +455,86 @@ class CartItemDetail(APIView):
         cart_item = get_object_or_404(CartItem, cart=cart, id=pk)
         cart_item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CustomerViewSet(ModelViewSet):
+    queryset = Customer.objects.all()
+    serializer_class = CustomerSerializer
+    permission_classes = [IsAdminUser]
+
+    http_method_names = ['get', 'put']
+
+    @action(detail=False, methods=['GET', 'PUT'], permission_classes=[IsCustomerUser])
+    def me(self, request):
+        customer, created = Customer.objects.get_or_create(user=request.user)
+        if request.method == 'GET':
+            serializer = CustomerSerializer(customer)
+            return Response(serializer.data)
+        elif request.method == 'PUT':
+            serializer = CustomerSerializer(customer, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+
+
+class SellerViewSet(ModelViewSet):
+    queryset = Seller.objects.all()
+    serializer_class = SellerSerializer
+    permission_classes = [IsAdminUser]
+    http_method_names = ['get', 'put']
+
+    @action(detail=False, methods=['GET', 'PUT'], permission_classes=[IsSellerUser])
+    def me(self, request):
+        seller = Seller.objects.get(user=request.user)
+        if request.method == 'GET':
+            serializer = SellerSerializer(seller)
+            return Response(serializer.data)
+        elif request.method == 'PUT':
+            serializer = SellerSerializer(seller, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+
+
+class OrderList(APIView):
+    permission_classes = [IsAuthenticated, IsCustomerUser]
+
+    def get_permissions(self):
+        if self.request.method == "POST":
+            return [IsCustomerUser()]
+        return [IsAdminUser()]
+
+    def get(self, request):
+        orders = None
+        if request.user.is_staff:
+            orders = Order.objects.all()
+        else:
+            customer = Customer.objects.get(user=request.user)
+            orders = Order.objects.filter(customer=customer)
+        serializer = OrderSerializer(orders, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = CreateOderSerializer(data=request.data, context={'user_id': request.user.id})
+        serializer.is_valid(raise_exception=True)
+        order = serializer.save()
+        serializer = OrderSerializer(order)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class OrderDetail(APIView):
+    permission_classes = [IsCustomerUser]
+
+    def get(self, request, pk):
+        customer = Customer.objects.get(user=request.user)
+        order = get_object_or_404(Order, id=pk, customer=customer)
+        serializer = OrderSerializer(order)
+        return Response(serializer.data)
+
+    def patch(self, request, pk):
+        customer = Customer.objects.get(user=request.user)
+        order = get_object_or_404(Order, id=pk, customer=customer)
+        serializer = UpdateOderSerializer(data=request.data, instance=order)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)

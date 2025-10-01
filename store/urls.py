@@ -1,5 +1,11 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+
 from . import views
+
+router = DefaultRouter()
+router.register('customers', views.CustomerViewSet)
+router.register('sellers', views.SellerViewSet)
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -27,4 +33,7 @@ urlpatterns = [
     path('api/carts/get/', views.CartDetail.as_view()),
     path('api/carts/get/items/', views.CartItemList.as_view()),
     path('api/carts/get/items/<int:pk>', views.CartItemDetail.as_view()),
+    path('api/', include(router.urls)),
+    path('api/orders/', views.OrderList.as_view()),
+    path('api/orders/<int:pk>', views.OrderDetail.as_view()),
 ]
