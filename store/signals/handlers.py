@@ -12,3 +12,6 @@ def create_customer_or_seller_after_user(sender, instance, created, **kwargs):
             Customer.objects.create(user=instance)
         elif instance.user_type == 'S':
             Seller.objects.create(user=instance)
+        elif instance.user_type == 'A':
+            Customer.objects.create(user=instance)
+            Seller.objects.create(user=instance)
