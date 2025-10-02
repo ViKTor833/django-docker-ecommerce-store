@@ -5,6 +5,7 @@ from django.shortcuts import render, redirect
 from rest_framework import status, permissions, serializers
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
+from rest_framework.mixins import ListModelMixin, CreateModelMixin, DestroyModelMixin
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -14,7 +15,7 @@ from store.forms import CustomerForm, ProductForm, SellerForm
 from store.models import Product, Customer, Seller, Category, Cart, CartItem, Order, OrderItem
 from store.permissions import IsAdminOrReadOnly, IsCustomerUser, IsSellerUser
 from store.serializers import CategorySerializer, CreateProductSerializer, ListProductSerializer, CartSerializer, \
-    UpdateCartSerializer, CartItemSerializer, AddCartItemSerializer, UpdateCartItemSerializer, CustomerSerializer, \
+    CartItemSerializer, AddCartItemSerializer, UpdateCartItemSerializer, CustomerSerializer, \
     SellerSerializer, OrderSerializer, CreateOderSerializer, UpdateOderSerializer
 
 
@@ -300,7 +301,7 @@ def show_all_orders(request):
     return render(request, 'store/show_orders.html', {'orders': orders})
 
 
-# Api Views
+# -----Api Views-----
 class CategoryViewSet(ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
@@ -348,21 +349,19 @@ class ProductViewSet(ModelViewSet):
 
 
 class CartList(APIView):
-    permission_classes = [IsAdminUser]
 
     def get_permissions(self):
         if self.request.method == "POST":
             return [IsCustomerUser()]
         return [IsAdminUser()]
 
-    # remove later only available for now
     def get(self, request):
         carts = Cart.objects.all()
         serializer = CartSerializer(carts, many=True)
         return Response(serializer.data)
 
     def post(self, request):
-        created_by_customer = get_object_or_404(Customer, user=request.user)
+        created_by_customer = Customer.objects.get(user=request.user)
         (cart, created) = Cart.objects.get_or_create(created_by_customer=created_by_customer)
         serializer = CartSerializer(cart)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -372,14 +371,14 @@ class CartDetail(APIView):
     permission_classes = [IsCustomerUser]
 
     def get(self, request):
-        created_by_customer = get_object_or_404(Customer, user=request.user)
+        created_by_customer = Customer.objects.get(user=request.user)
         cart = get_object_or_404(Cart.objects.prefetch_related("items__productItem"),
                                  created_by_customer=created_by_customer)
-        serializer = UpdateCartSerializer(cart)
-        return Response(serializer.data)  # what now?
+        serializer = CartSerializer(cart)
+        return Response(serializer.data)
 
     def delete(self, request):
-        created_by_customer = get_object_or_404(Customer, user=request.user)
+        created_by_customer = Customer.objects.get(user=request.user)
         cart = get_object_or_404(Cart, created_by_customer=created_by_customer)
         cart.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
