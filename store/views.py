@@ -2,10 +2,10 @@ from django.contrib import messages
 from django.contrib.auth import login, get_user_model
 from django.db.models import Q
 from django.shortcuts import render, redirect
-from rest_framework import status, permissions
+from rest_framework import status, permissions, serializers
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
@@ -301,76 +301,50 @@ def show_all_orders(request):
 
 
 # Api Views
-
-class CategoryList(APIView):
-    permission_classes = [IsAdminOrReadOnly, ]
-
-    def get(self, request):
-        queryset = Category.objects.all()
-        serializer = CategorySerializer(queryset, many=True)
-        return Response(serializer.data)
-
-    def post(self, request):
-        serializer = CategorySerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+class CategoryViewSet(ModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = (IsAdminOrReadOnly,)
 
 
-class CategoryDetail(APIView):
-    permission_classes = [IsAdminOrReadOnly, ]
-
-    def get(self, request, pk):
-        queryset = get_object_or_404(Category, id=pk)
-        serializer = CategorySerializer(queryset)
-        return Response(serializer.data)
-
-    def delete(self, request, pk):
-        queryset = get_object_or_404(Category, id=pk)
-        queryset.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class ProductList(APIView):
-    # permissions = [IsAdminOrReadOnly, ]
+class ProductViewSet(ModelViewSet):
+    queryset = Product.objects.all()
 
     def get_permissions(self):
         if self.request.method in permissions.SAFE_METHODS:
             return [AllowAny()]
-        elif self.request.method == 'POST':
+        elif self.request.method in ["POST", "PUT", "PATCH", "DELETE"]:
             return [IsSellerUser()]
 
-    def get(self, request):
-        queryset = Product.objects.all()
-        serializer = ListProductSerializer(queryset, many=True)
-        return Response(serializer.data)
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return ListProductSerializer
+        elif self.request.method in ['POST', 'PUT', 'PATCH']:
+            return CreateProductSerializer
 
-    def post(self, request):
-        serializer = CreateProductSerializer(data=request.data)
+    def get_serializer_context(self):
+        return {'user_id': self.request.user.id}
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        seller = Seller.objects.get(user=self.request.user)
+        if instance.created_by_seller != seller:
+            raise serializers.ValidationError("You cannot edit other sellers's products.")
+
+        serializer = CreateProductSerializer(instance, data=request.data, partial=partial,
+                                             context={'user_id': self.request.user.id})
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-
-class ProductDetail(APIView):
-    permission_classes = [IsAdminOrReadOnly, ]
-
-    def get(self, request, pk):
-        queryset = get_object_or_404(Product, id=pk)
-        serializer = ListProductSerializer(queryset)
         return Response(serializer.data)
 
-    def put(self, request, pk):
-        queryset = get_object_or_404(Product, id=pk)
-        serializer = CreateProductSerializer(data=request.data, instance=queryset)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        seller = Seller.objects.get(user=self.request.user)
+        if instance.created_by_seller != seller:
+            raise serializers.ValidationError("You cannot delete other seller's products.")
 
-    def delete(self, request, pk):
-        queryset = get_object_or_404(Product, id=pk)
-        queryset.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return super().destroy(request, *args, **kwargs)
 
 
 class CartList(APIView):

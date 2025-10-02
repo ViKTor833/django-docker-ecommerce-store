@@ -22,7 +22,11 @@ class ListProductSerializer(serializers.ModelSerializer):
 class CreateProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ['name', 'description', 'price', 'category', 'created_by_seller']
+        fields = ['name', 'description', 'price', 'category']
+
+    def save(self, **kwargs):
+        created_by_seller = Seller.objects.get(user_id=self.context['user_id'])
+        super().save(created_by_seller=created_by_seller, **kwargs)
 
 
 class SimpleProductSerializer(serializers.ModelSerializer):
@@ -151,6 +155,7 @@ class CreateOderSerializer(serializers.Serializer):
             OrderItem.objects.bulk_create(order_items)
             cart.delete()
             return order
+
 
 class UpdateOderSerializer(serializers.ModelSerializer):
     class Meta:

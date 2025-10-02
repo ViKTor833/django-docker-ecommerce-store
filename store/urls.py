@@ -4,6 +4,8 @@ from rest_framework.routers import DefaultRouter
 from . import views
 
 router = DefaultRouter()
+router.register('categories', views.CategoryViewSet)
+router.register('products', views.ProductViewSet)
 router.register('customers', views.CustomerViewSet)
 router.register('sellers', views.SellerViewSet)
 
@@ -24,16 +26,14 @@ urlpatterns = [
     path('show_order/<int:pk>', views.show_order_detail, name='show_order_detail'),
     path("view_created_products/", views.view_created_products, name="view_created_products"),
     path('show_all_orders/', views.show_all_orders, name='show_all_orders'),
-    #   api-paths
-    path('api/list_categories/', views.CategoryList.as_view()),
-    path('api/list_categories/<int:pk>', views.CategoryDetail.as_view()),
-    path('api/list_products/', views.ProductList.as_view()),
-    path('api/list_products/<int:pk>', views.ProductDetail.as_view()),
+    # ---API-Paths---
+    path('api/', include(router.urls)),
+    # path('api/list_products/', views.ProductList.as_view()),
+    # path('api/list_products/<int:pk>', views.ProductDetail.as_view()),
     path('api/carts/', views.CartList.as_view()),
     path('api/carts/get/', views.CartDetail.as_view()),
     path('api/carts/get/items/', views.CartItemList.as_view()),
     path('api/carts/get/items/<int:pk>', views.CartItemDetail.as_view()),
-    path('api/', include(router.urls)),
     path('api/orders/', views.OrderList.as_view()),
     path('api/orders/<int:pk>', views.OrderDetail.as_view()),
 ]
