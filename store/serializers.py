@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from store.models import Category, Product, Cart, CartItem, Customer, Seller, Order, OrderItem
@@ -91,7 +92,17 @@ class AddCartItemSerializer(serializers.ModelSerializer):
 class UpdateCartItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = CartItem
-        fields = ['quantity']
+        fields = ['id', 'quantity']
+
+    def save(self, **kwargs):
+        customer = self.context['customer']
+
+        instance = self.instance
+        cart = get_object_or_404(Cart, items__id=instance.id)
+        if cart.created_by_customer != customer:
+            raise serializers.ValidationError('CartItem does not belong to this customer')
+
+        super().save(**kwargs)
 
 
 class CustomerSerializer(serializers.ModelSerializer):
