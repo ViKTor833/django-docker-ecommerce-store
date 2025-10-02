@@ -131,13 +131,14 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True)
+    customer = serializers.StringRelatedField(many=False, read_only=True)
 
     class Meta:
         model = Order
         fields = ['id', 'customer', 'placed_at', 'payment_status', 'items']
 
 
-class CreateOderSerializer(serializers.Serializer):
+class CreateOrderSerializer(serializers.Serializer):
 
     def save(self, **kwargs):
         with transaction.atomic():
@@ -147,7 +148,7 @@ class CreateOderSerializer(serializers.Serializer):
             cart = Cart.objects.get(created_by_customer=customer)
             if CartItem.objects.filter(cart=cart).count() == 0:
                 raise serializers.ValidationError("Cart is empty")
-            order = Order.objects.create(id=customer.cart.id)
+            order = Order.objects.create(customer=customer)
 
             cart_items = CartItem.objects.select_related('productItem').filter(cart=cart)
             order_items = [OrderItem(
@@ -161,7 +162,7 @@ class CreateOderSerializer(serializers.Serializer):
             return order
 
 
-class UpdateOderSerializer(serializers.ModelSerializer):
+class UpdateOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['payment_status']

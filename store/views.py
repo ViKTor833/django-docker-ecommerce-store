@@ -2,11 +2,11 @@ from django.contrib import messages
 from django.contrib.auth import login, get_user_model
 from django.db.models import Q
 from django.shortcuts import render, redirect
+from openid.server.trustroot import returnToMatches
 from rest_framework import status, permissions, serializers
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
-from rest_framework.mixins import ListModelMixin, CreateModelMixin, DestroyModelMixin
-from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
@@ -16,7 +16,7 @@ from store.models import Product, Customer, Seller, Category, Cart, CartItem, Or
 from store.permissions import IsAdminOrReadOnly, IsCustomerUser, IsSellerUser
 from store.serializers import CategorySerializer, CreateProductSerializer, ListProductSerializer, CartSerializer, \
     CartItemSerializer, AddCartItemSerializer, UpdateCartItemSerializer, CustomerSerializer, \
-    SellerSerializer, OrderSerializer, CreateOderSerializer, UpdateOderSerializer
+    SellerSerializer, OrderSerializer, CreateOrderSerializer, UpdateOrderSerializer
 
 
 # Create your views here.
@@ -439,7 +439,7 @@ class CustomerViewSet(ModelViewSet):
 
     @action(detail=False, methods=['GET', 'PUT'], permission_classes=[IsCustomerUser])
     def me(self, request):
-        customer, created = Customer.objects.get_or_create(user=request.user)
+        customer = Customer.objects.get(user=request.user)
         if request.method == 'GET':
             serializer = CustomerSerializer(customer)
             return Response(serializer.data)
@@ -469,45 +469,26 @@ class SellerViewSet(ModelViewSet):
             return Response(serializer.data)
 
 
-class OrderList(APIView):
-    permission_classes = [IsAuthenticated, IsCustomerUser]
-
-    def get_permissions(self):
-        if self.request.method == "POST":
-            return [IsCustomerUser()]
-        return [IsAdminUser()]
-
-    def get(self, request):
-        orders = None
-        if request.user.is_staff:
-            orders = Order.objects.all()
-        else:
-            customer = Customer.objects.get(user=request.user)
-            orders = Order.objects.filter(customer=customer)
-        serializer = OrderSerializer(orders, many=True)
-        return Response(serializer.data)
-
-    def post(self, request):
-        serializer = CreateOderSerializer(data=request.data, context={'user_id': request.user.id})
-        serializer.is_valid(raise_exception=True)
-        order = serializer.save()
-        serializer = OrderSerializer(order)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-
-class OrderDetail(APIView):
+class OrderViewSet(ModelViewSet):
+    http_method_names = ['get', 'post', 'patch']
     permission_classes = [IsCustomerUser]
 
-    def get(self, request, pk):
-        customer = Customer.objects.get(user=request.user)
-        order = get_object_or_404(Order, id=pk, customer=customer)
-        serializer = OrderSerializer(order)
-        return Response(serializer.data)
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return OrderSerializer
+        elif self.request.method == 'POST':
+            return CreateOrderSerializer
+        elif self.request.method in ['PUT', 'PATCH']:
+            return UpdateOrderSerializer
 
-    def patch(self, request, pk):
-        customer = Customer.objects.get(user=request.user)
-        order = get_object_or_404(Order, id=pk, customer=customer)
-        serializer = UpdateOderSerializer(data=request.data, instance=order)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_serializer_context(self):
+        if self.request.method == 'POST':
+            return {'user_id': self.request.user.id}
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            return Order.objects.all()
+
+        customer = Customer.objects.get(user=self.request.user)
+        return Order.objects.filter(customer=customer)

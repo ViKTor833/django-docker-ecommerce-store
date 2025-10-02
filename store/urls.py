@@ -8,6 +8,7 @@ router.register('categories', views.CategoryViewSet)
 router.register('products', views.ProductViewSet)
 router.register('customers', views.CustomerViewSet)
 router.register('sellers', views.SellerViewSet)
+router.register('orders', views.OrderViewSet, basename='orders')
 
 router2 = DefaultRouter()
 router2.register('items', views.CartItemViewSet)
@@ -35,6 +36,4 @@ urlpatterns = [
     path('api/carts/', views.CartList.as_view()),
     path('api/carts/mycart/', views.CartDetail.as_view()),
     path('api/carts/mycart/', include(router2.urls)),
-    path('api/orders/', views.OrderList.as_view()),
-    path('api/orders/<int:pk>', views.OrderDetail.as_view()),
 ]
