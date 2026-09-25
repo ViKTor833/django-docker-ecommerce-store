@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth import login, get_user_model
+from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import render, redirect
 from openid.server.trustroot import returnToMatches
@@ -17,6 +18,7 @@ from store.permissions import IsAdminOrReadOnly, IsCustomerUser, IsSellerUser
 from store.serializers import CategorySerializer, CreateProductSerializer, ListProductSerializer, CartSerializer, \
     CartItemSerializer, AddCartItemSerializer, UpdateCartItemSerializer, CustomerSerializer, \
     SellerSerializer, OrderSerializer, CreateOrderSerializer, UpdateOrderSerializer
+from .decorators import admin_required, seller_required, customer_required
 
 
 # Create your views here.
@@ -56,14 +58,8 @@ def product_detail(request, pk):
     return render(request, 'store/product_detail.html', context)
 
 
+@seller_required
 def add_product(request):
-    if not request.user.is_authenticated:
-        messages.error(request, 'You must be logged in to do that.')
-        return redirect('login')
-    if not request.user.user_type == 'S':
-        messages.error(request, 'Only available for Seller accounts')
-        return redirect('home')
-
     form = ProductForm()
     if request.method == 'POST':
         form = ProductForm(request.POST)
@@ -80,14 +76,8 @@ def add_product(request):
     return render(request, 'store/add_product_form.html', {'form': form})
 
 
+@seller_required
 def edit_product(request, pk):
-    if not request.user.is_authenticated:
-        messages.error(request, 'You must be logged in to do that.')
-        return redirect('login')
-    if not request.user.user_type == 'S':
-        messages.error(request, 'Only available for Seller accounts')
-        return redirect('home')
-
     product = Product.objects.get(id=pk)
 
     seller = Seller.objects.get(user=request.user)
@@ -109,36 +99,28 @@ def edit_product(request, pk):
     return render(request, 'store/edit_product_form.html', {'form': form})
 
 
+# TODO
 def delete_product(request, pk):
     product = Product.objects.get(pk=pk)
     product.delete()
     return redirect('home')
 
 
+@seller_required
 def view_created_products(request):
-    if not request.user.is_authenticated:
-        messages.error(request, 'You must be logged in to do that.')
-        return redirect('login')
-    if not request.user.user_type == 'S':
-        messages.error(request, 'Only available for Customer accounts')
-        return redirect('home')
-
     seller = Seller.objects.get(user=request.user)
     return render(request, "store/view_created_products.html", {'products': seller.all_products.all()})
 
 
+@login_required(login_url='/login/')
 def update_user_profile(request):
-    if not request.user.is_authenticated:
-        messages.error(request, 'You must be logged in to do that.')
-        return redirect('login')
-
     current_user_profile = None
     form = None
     current_user = get_user_model().objects.get(id=request.user.id)
-    if current_user.user_type == 'S':
+    if current_user.is_seller:
         current_user_profile = Seller.objects.get(user=request.user)
         form = SellerForm(request.POST or None, instance=current_user_profile)
-    elif current_user.user_type == 'C':
+    elif current_user.is_customer:
         current_user_profile = Customer.objects.get(user=request.user)
         form = CustomerForm(request.POST or None, instance=current_user_profile)
     else:
@@ -154,15 +136,8 @@ def update_user_profile(request):
 
 
 # Category Views
-
+@admin_required
 def add_category(request):
-    if not request.user.is_authenticated:
-        messages.error(request, 'You must be logged in to do that.')
-        return redirect('login')
-    if not request.user.user_type == 'A':
-        messages.error(request, 'You do not have permission to add a new category')
-        return redirect('home')
-
     if request.method == 'POST':
         category_name = request.POST['category_name']
         Category.objects.create(name=category_name)
@@ -178,14 +153,15 @@ def list_categories(request):
 
 
 # Cart views
+@customer_required
 def add_product_to_cart(request, pk):
-    if not request.user.is_authenticated:
-        messages.error(request, 'You must be logged in to do that.')
-        return redirect('login')
-
-    if not request.user.user_type == 'C':
-        messages.error(request, 'Only available for Customer accounts')
-        return redirect('home')
+    # if not request.user.is_authenticated:
+    #     messages.error(request, 'You must be logged in to do that.')
+    #     return redirect('login')
+    #
+    # if not request.user.user_type == 'C':
+    #     messages.error(request, 'Only available for Customer accounts')
+    #     return redirect('home')
 
     if request.method == 'POST':
         customer = Customer.objects.get(user=request.user)
@@ -203,15 +179,15 @@ def add_product_to_cart(request, pk):
         messages.error(request, 'You do not have permission to add a new product')
         return redirect('home')
 
-
+@customer_required
 def show_cart(request):
-    if not request.user.is_authenticated:
-        messages.error(request, 'You must be logged in to do that.')
-        return redirect('login')
-
-    if not request.user.user_type == 'C':
-        messages.error(request, 'Only available for Customer accounts')
-        return redirect('home')
+    # if not request.user.is_authenticated:
+    #     messages.error(request, 'You must be logged in to do that.')
+    #     return redirect('login')
+    #
+    # if not request.user.user_type == 'C':
+    #     messages.error(request, 'Only available for Customer accounts')
+    #     return redirect('home')
 
     customer = Customer.objects.get(user=request.user)
     if not Cart.objects.filter(created_by_customer=customer).exists():
@@ -225,7 +201,7 @@ def show_cart(request):
 
     return render(request, 'store/show_cart.html', {'cart': cart, 'items': items, 'total': total})
 
-
+#TODO cusomer_required
 def delete_item(request, pk):
     if not request.user.is_authenticated:
         messages.error(request, 'You must be logged in to do that.')
@@ -237,14 +213,15 @@ def delete_item(request, pk):
 
 
 # Order views
+@customer_required
 def checkout_order(request):
-    if not request.user.is_authenticated:
-        messages.error(request, 'You must be logged in to do that.')
-        return redirect('login')
-
-    if not request.user.user_type == 'C':
-        messages.error(request, 'Only available for Customer accounts')
-        return redirect('home')
+    # if not request.user.is_authenticated:
+    #     messages.error(request, 'You must be logged in to do that.')
+    #     return redirect('login')
+    #
+    # if not request.user.user_type == 'C':
+    #     messages.error(request, 'Only available for Customer accounts')
+    #     return redirect('home')
 
     customer = Customer.objects.get(user=request.user)
     cart = Cart.objects.get(created_by_customer=customer)
@@ -259,14 +236,14 @@ def checkout_order(request):
     cart.delete()
     return redirect('home')
 
-
+@customer_required
 def show_orders(request):
-    if not request.user.is_authenticated:
-        messages.error(request, 'You must be logged in to do that.')
-        return redirect('login')
-    if not request.user.user_type == 'C':
-        messages.error(request, 'Only available for Customer accounts')
-        return redirect('home')
+    # if not request.user.is_authenticated:
+    #     messages.error(request, 'You must be logged in to do that.')
+    #     return redirect('login')
+    # if not request.user.user_type == 'C':
+    #     messages.error(request, 'Only available for Customer accounts')
+    #     return redirect('home')
 
     customer = Customer.objects.get(user=request.user)
     orders = customer.orders.all()
@@ -289,14 +266,14 @@ def show_order_detail(request, pk):
     context = {'order': order, 'total_price': total_price}
     return render(request, 'store/show_order_detail.html', context)
 
-
+@admin_required
 def show_all_orders(request):
-    if not request.user.is_authenticated:
-        messages.error(request, 'You must be logged in to do that.')
-        return redirect('login')
-    if not request.user.user_type == 'A':
-        messages.error(request, 'Only available for Admin accounts')
-        return redirect('home')
+    # if not request.user.is_authenticated:
+    #     messages.error(request, 'You must be logged in to do that.')
+    #     return redirect('login')
+    # if not request.user.user_type == 'A':
+    #     messages.error(request, 'Only available for Admin accounts')
+    #     return redirect('home')
     orders = Order.objects.all()
     return render(request, 'store/show_orders.html', {'orders': orders})
 

@@ -1,5 +1,6 @@
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 
 from core.forms import SignUpForm, ChangePasswordForm, UpdateUserForm
@@ -52,16 +53,18 @@ def login_user(request):
         return render(request, 'core/login_form.html')
 
 
+@login_required(login_url='login')
 def logout_user(request):
     logout(request)
     messages.success(request, 'You have been logged out.')
     return redirect('home')
 
 
+@login_required(login_url='login')
 def change_password(request):
-    if not request.user.is_authenticated:
-        messages.error(request, 'You must be logged in to do that.')
-        return redirect('login')
+    # if not request.user.is_authenticated:
+    #     messages.error(request, 'You must be logged in to do that.')
+    #     return redirect('login')
 
     current_user = get_user_model().objects.get(id=request.user.id)
     if request.method == 'POST':
@@ -80,10 +83,11 @@ def change_password(request):
     return render(request, 'core/change_password_form.html', {'form': form})
 
 
+@login_required(login_url='login')
 def update_user(request):
-    if not request.user.is_authenticated:
-        messages.error(request, 'You must be logged in to do that.')
-        return redirect('login')
+    # if not request.user.is_authenticated:
+    #     messages.error(request, 'You must be logged in to do that.')
+    #     return redirect('login')
 
     current_user = get_user_model().objects.get(id=request.user.id)
     form = UpdateUserForm(request.POST or None, instance=current_user)

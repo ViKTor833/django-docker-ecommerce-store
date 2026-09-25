@@ -13,3 +13,15 @@ class UserType(models.TextChoices):
 class User(AbstractUser):
     email = models.EmailField(unique=True)
     user_type = models.CharField(max_length=1, choices=UserType, default=UserType.CUSTOMER)
+
+    @property
+    def is_admin(self):
+        return self.user_type == UserType.ADMIN
+
+    @property
+    def is_customer(self):
+        return self.user_type == UserType.CUSTOMER
+
+    @property
+    def is_seller(self):
+        return self.user_type == UserType.SELLER

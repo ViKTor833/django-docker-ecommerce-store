@@ -15,14 +15,14 @@
                        data-bs-toggle="dropdown" aria-expanded="false">Update User Information</a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                         <li><a class="dropdown-item" href="{% url 'update_user' %}">Update User</a></li>
-                        {% if request.user.user_type != 'A' %}
+                        {% if request.user.is_admin %}
                         <li><a class="dropdown-item" href="{% url 'update_user_profile' %}">Update Profile</a></li>
                         {% endif %}
                     </ul>
                 </li>
                 {% endif %}
 
-                {% if request.user.is_authenticated and request.user.user_type == 'A' %}
+                {% if request.user.is_authenticated and request.user.is_admin %}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" id="navbarDropdown2" href="#" role="button"
                        data-bs-toggle="dropdown" aria-expanded="false">Review</a>
@@ -33,9 +33,9 @@
                 </li>
                 {% endif %}
 
-                {% if request.user.user_type == 'C' %}
+                {% if request.user.is_customer %}
                 <li class="nav-item"><a class="nav-link" href="{% url 'show_orders' %}">My Orders</a></li>
-                {% elif request.user.user_type == 'S' %}
+                {% elif request.user.is_seller %}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" id="navbarDropdown3" href="#" role="button"
                        data-bs-toggle="dropdown" aria-expanded="false">Products</a>
@@ -61,7 +61,7 @@
                 <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
                 {% endif %}
             </ul>
-            {% if request.user.user_type == 'C' %}
+            {% if request.user.is_customer %}
             <form class="d-flex ps-3" method="get" action="{% url 'show_cart' %}">
                 <button class="btn btn-outline-dark" type="submit">
                     <i class="bi-cart-fill me-1"></i>
