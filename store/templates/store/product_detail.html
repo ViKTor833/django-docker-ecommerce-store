@@ -15,13 +15,12 @@
                 </div>
                 <p class="lead"><small>Description:</small><br>{{ product.description }}</p>
                 <br>
-                {% if request.user.user_type == 'C' %}
+                {% if request.user.is_customer %}
                 <form method="post" action="{% url 'add_product_to_cart' product.id %}">
                     {% csrf_token %}
                     <div class="d-flex">
-                        <input class="form-control text-center me-3" id="productQuantity" name="productQuantity"
-                               type="number" value="1"
-                               style="max-width: 3rem"/>
+                        <input class="form-control text-center me-3 quantity-input" id="productQuantity" name="productQuantity"
+                               type="number" value="1" min="1"  />
                         <button class="btn btn-outline-dark flex-shrink-0" type="submit">
                             <i class="bi-cart-fill me-1"></i>
                             Add to cart
@@ -30,7 +29,7 @@
                 </form>
                 {% endif %}
                 <br>
-                {% if request.user.user_type == 'S' and request.user == seller %}
+                {% if request.user.is_seller and request.user == seller %}
                 <div class="row d-flex">
                     <div class="col-2">
                         <a type="button" class="btn btn-secondary" href="{% url 'edit_product' product.id %}">Edit</a>

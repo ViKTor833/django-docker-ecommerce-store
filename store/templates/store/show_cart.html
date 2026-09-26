@@ -24,10 +24,9 @@
                                 {% csrf_token %}
                                 <div class="row">
                                     <div class="col-2 offset-3 text-end ">
-                                        <input class="form-control text-center" id="productQuantity"
+                                        <input class="form-control text-center quantity-input" id="productQuantity"
                                                name="productQuantity"
-                                               type="number" value="{{ item.quantity }}"
-                                               style="max-width: 3rem"/>
+                                               type="number" value="{{ item.quantity }}"/>
                                     </div>
                                     <div class="col d-flex ">
                                         <button class="btn btn-outline-dark flex-shrink-0 " type="submit">
