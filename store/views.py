@@ -99,8 +99,8 @@ def edit_product(request, pk):
     return render(request, 'store/edit_product_form.html', {'form': form})
 
 
-# TODO
 def delete_product(request, pk):
+    # TODO rewrite method
     product = Product.objects.get(pk=pk)
     product.delete()
     return redirect('home')
@@ -144,6 +144,8 @@ def add_category(request):
         return redirect('home')
     elif request.method == 'GET':
         return render(request, 'store/add_category_form.html')
+    else:
+        return redirect('home')
 
 
 def list_categories(request):
@@ -171,6 +173,7 @@ def add_product_to_cart(request, pk):
         messages.error(request, 'You do not have permission to add a new product')
         return redirect('home')
 
+
 @customer_required
 def show_cart(request):
     customer = Customer.objects.get(user=request.user)
@@ -185,8 +188,10 @@ def show_cart(request):
 
     return render(request, 'store/show_cart.html', {'cart': cart, 'items': items, 'total': total})
 
+
 @customer_required
 def delete_item(request, pk):
+    # TODO rewrite method
     customer = Customer.objects.get(user=request.user)
     cart = Cart.objects.get(created_by_customer=customer)
     CartItem.objects.get(cart=cart, productItem=Product.objects.get(pk=pk)).delete()
@@ -196,6 +201,7 @@ def delete_item(request, pk):
 # Order views
 @customer_required
 def checkout_order(request):
+    # TODO rewrite method
     customer = Customer.objects.get(user=request.user)
     cart = Cart.objects.get(created_by_customer=customer)
 
@@ -209,6 +215,7 @@ def checkout_order(request):
     cart.delete()
     return redirect('home')
 
+
 @customer_required
 def show_orders(request):
     customer = Customer.objects.get(user=request.user)
@@ -216,14 +223,8 @@ def show_orders(request):
     return render(request, 'store/show_orders.html', {'orders': orders})
 
 
+@customer_required
 def show_order_detail(request, pk):
-    if not request.user.is_authenticated:
-        messages.error(request, 'You must be logged in to do that.')
-        return redirect('login')
-    if not (request.user.user_type == 'C' or request.user.user_type == 'A'):
-        messages.error(request, 'Only available for Customer accounts')
-        return redirect('home')
-
     order = Order.objects.prefetch_related('items').get(id=pk)
     total_price = 0
     for item in order.items.all():
@@ -231,6 +232,7 @@ def show_order_detail(request, pk):
 
     context = {'order': order, 'total_price': total_price}
     return render(request, 'store/show_order_detail.html', context)
+
 
 @admin_required
 def show_all_orders(request):

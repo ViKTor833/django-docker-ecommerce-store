@@ -20,8 +20,8 @@ class User(AbstractUser):
 
     @property
     def is_customer(self):
-        return self.user_type == UserType.CUSTOMER
+        return self.user_type in [UserType.CUSTOMER, UserType.ADMIN]
 
     @property
     def is_seller(self):
-        return self.user_type == UserType.SELLER
+        return self.user_type in [UserType.SELLER, UserType.ADMIN]

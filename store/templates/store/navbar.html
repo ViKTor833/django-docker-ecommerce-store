@@ -19,11 +19,10 @@
                 {% if user.is_authenticated %}
 
                 {% if request.user.is_customer %}
-
                 <li class="nav-item"><a class="nav-link" href="{% url 'show_orders' %}">My Orders</a></li>
+                {% endif %}
 
-                {% elif request.user.is_seller %}
-
+                {% if request.user.is_seller %}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" id="navbarDropdown3" href="#" role="button"
                        data-bs-toggle="dropdown" aria-expanded="false">Products</a>
@@ -33,7 +32,6 @@
                             Products</a></li>
                     </ul>
                 </li>
-
                 {% endif %}
 
                 {% endif %}
@@ -42,12 +40,13 @@
 
             </ul>
 
+            {% if user.is_authenticated %}
             <ul class="navbar-nav  mb-2 mb-lg-0 ms-lg-4">
-                {% if user.is_authenticated %}
                 <li class="nav-item"><a class="nav-link" href="{% url 'update_user' %}"><h4>{{ user.username }}</h4></a>
                 </li>
-                {% endif %}
             </ul>
+
+            {% endif %}
 
             <ul class="navbar-nav  mb-2 mb-lg-0 ms-lg-4">
                 {% if user.is_authenticated %}
@@ -90,7 +89,6 @@
 
                         {% endif %}
 
-                        <li><a class="dropdown-item" href="#">View Available Websites</a></li>
                     </ul>
                 </li>
             </ul>
