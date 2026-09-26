@@ -155,14 +155,6 @@ def list_categories(request):
 # Cart views
 @customer_required
 def add_product_to_cart(request, pk):
-    # if not request.user.is_authenticated:
-    #     messages.error(request, 'You must be logged in to do that.')
-    #     return redirect('login')
-    #
-    # if not request.user.user_type == 'C':
-    #     messages.error(request, 'Only available for Customer accounts')
-    #     return redirect('home')
-
     if request.method == 'POST':
         customer = Customer.objects.get(user=request.user)
         if not Cart.objects.filter(created_by_customer=customer).exists():
@@ -174,21 +166,13 @@ def add_product_to_cart(request, pk):
         cartItem, created = CartItem.objects.get_or_create(cart=customer.cart, productItem=product)
         cartItem.quantity = int(quantity)
         cartItem.save()
-        return redirect('home')
+        return redirect(request.META.get("HTTP_REFERER", "/"))
     else:
         messages.error(request, 'You do not have permission to add a new product')
         return redirect('home')
 
 @customer_required
 def show_cart(request):
-    # if not request.user.is_authenticated:
-    #     messages.error(request, 'You must be logged in to do that.')
-    #     return redirect('login')
-    #
-    # if not request.user.user_type == 'C':
-    #     messages.error(request, 'Only available for Customer accounts')
-    #     return redirect('home')
-
     customer = Customer.objects.get(user=request.user)
     if not Cart.objects.filter(created_by_customer=customer).exists():
         Cart.objects.create(created_by_customer=customer)
@@ -215,14 +199,6 @@ def delete_item(request, pk):
 # Order views
 @customer_required
 def checkout_order(request):
-    # if not request.user.is_authenticated:
-    #     messages.error(request, 'You must be logged in to do that.')
-    #     return redirect('login')
-    #
-    # if not request.user.user_type == 'C':
-    #     messages.error(request, 'Only available for Customer accounts')
-    #     return redirect('home')
-
     customer = Customer.objects.get(user=request.user)
     cart = Cart.objects.get(created_by_customer=customer)
 
@@ -238,13 +214,6 @@ def checkout_order(request):
 
 @customer_required
 def show_orders(request):
-    # if not request.user.is_authenticated:
-    #     messages.error(request, 'You must be logged in to do that.')
-    #     return redirect('login')
-    # if not request.user.user_type == 'C':
-    #     messages.error(request, 'Only available for Customer accounts')
-    #     return redirect('home')
-
     customer = Customer.objects.get(user=request.user)
     orders = customer.orders.all()
     return render(request, 'store/show_orders.html', {'orders': orders})
@@ -268,12 +237,6 @@ def show_order_detail(request, pk):
 
 @admin_required
 def show_all_orders(request):
-    # if not request.user.is_authenticated:
-    #     messages.error(request, 'You must be logged in to do that.')
-    #     return redirect('login')
-    # if not request.user.user_type == 'A':
-    #     messages.error(request, 'Only available for Admin accounts')
-    #     return redirect('home')
     orders = Order.objects.all()
     return render(request, 'store/show_orders.html', {'orders': orders})
 
