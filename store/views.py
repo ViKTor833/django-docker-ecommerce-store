@@ -185,11 +185,8 @@ def show_cart(request):
 
     return render(request, 'store/show_cart.html', {'cart': cart, 'items': items, 'total': total})
 
-#TODO cusomer_required
+@customer_required
 def delete_item(request, pk):
-    if not request.user.is_authenticated:
-        messages.error(request, 'You must be logged in to do that.')
-        return redirect('login')
     customer = Customer.objects.get(user=request.user)
     cart = Cart.objects.get(created_by_customer=customer)
     CartItem.objects.get(cart=cart, productItem=Product.objects.get(pk=pk)).delete()

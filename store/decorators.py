@@ -20,7 +20,7 @@ def role_required(role_attr, login_url='login', redirect_to='home'):
     return decorator
 
 
-# Clean, intuitive aliases
+
 admin_required = role_required('is_admin')
 seller_required = role_required('is_seller')
 customer_required = role_required('is_customer')

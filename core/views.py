@@ -7,7 +7,6 @@ from core.forms import SignUpForm, ChangePasswordForm, UpdateUserForm
 
 
 # Create your views here.
-# Authentication
 def register_user(request):
     form = SignUpForm()
     if request.method == 'POST':
@@ -62,10 +61,6 @@ def logout_user(request):
 
 @login_required(login_url='login')
 def change_password(request):
-    # if not request.user.is_authenticated:
-    #     messages.error(request, 'You must be logged in to do that.')
-    #     return redirect('login')
-
     current_user = get_user_model().objects.get(id=request.user.id)
     if request.method == 'POST':
         form = ChangePasswordForm(current_user, request.POST)
@@ -85,10 +80,6 @@ def change_password(request):
 
 @login_required(login_url='login')
 def update_user(request):
-    # if not request.user.is_authenticated:
-    #     messages.error(request, 'You must be logged in to do that.')
-    #     return redirect('login')
-
     current_user = get_user_model().objects.get(id=request.user.id)
     form = UpdateUserForm(request.POST or None, instance=current_user)
 
