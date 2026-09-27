@@ -361,42 +361,44 @@ class CartItemViewSet(ModelViewSet):
 
 
 class CustomerViewSet(ModelViewSet):
-    queryset = Customer.objects.all()
+    queryset = Customer.objects.select_related('user').all()
     serializer_class = CustomerSerializer
     permission_classes = [IsAdminUser]
 
-    http_method_names = ['get', 'put']
+    http_method_names = ['get', 'put', 'patch']
 
-    @action(detail=False, methods=['GET', 'PUT'], permission_classes=[IsCustomerUser])
+    @action(detail=False, methods=['GET', 'PUT', 'PATCH'], permission_classes=[IsCustomerUser])
     def me(self, request):
         customer = Customer.objects.get(user=request.user)
         if request.method == 'GET':
             serializer = CustomerSerializer(customer)
             return Response(serializer.data)
-        elif request.method == 'PUT':
-            serializer = CustomerSerializer(customer, data=request.data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data)
+
+        partial = request.method == 'PATCH'
+        serializer = CustomerSerializer(customer, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 
 class SellerViewSet(ModelViewSet):
-    queryset = Seller.objects.all()
+    queryset = Seller.objects.select_related('user').all()
     serializer_class = SellerSerializer
     permission_classes = [IsAdminUser]
-    http_method_names = ['get', 'put']
+    http_method_names = ['get', 'put', 'patch']
 
-    @action(detail=False, methods=['GET', 'PUT'], permission_classes=[IsSellerUser])
+    @action(detail=False, methods=['GET', 'PUT', 'PATCH'], permission_classes=[IsSellerUser])
     def me(self, request):
         seller = Seller.objects.get(user=request.user)
         if request.method == 'GET':
             serializer = SellerSerializer(seller)
             return Response(serializer.data)
-        elif request.method == 'PUT':
-            serializer = SellerSerializer(seller, data=request.data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data)
+
+        partial = request.method == 'PATCH'
+        serializer = SellerSerializer(seller, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 
 class OrderViewSet(ModelViewSet):
