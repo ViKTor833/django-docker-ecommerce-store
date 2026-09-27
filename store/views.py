@@ -246,43 +246,36 @@ class CategoryViewSet(ModelViewSet):
 
 
 class ProductViewSet(ModelViewSet):
-    queryset = Product.objects.all()
+    queryset = Product.objects.select_related('category', 'created_by_seller__user').all()
 
     def get_permissions(self):
         if self.request.method in permissions.SAFE_METHODS:
             return [AllowAny()]
-        elif self.request.method in ["POST", "PUT", "PATCH", "DELETE"]:
-            return [IsSellerUser()]
+        return [IsSellerUser()]
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return ListProductSerializer
-        elif self.request.method in ['POST', 'PUT', 'PATCH']:
-            return CreateProductSerializer
+        return CreateProductSerializer
 
     def get_serializer_context(self):
-        return {'user_id': self.request.user.id}
+        context = super().get_serializer_context()
+        if self.request.user.is_authenticated:
+            context['user_id'] = self.request.user.id
+        return context
 
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
+    def perform_update(self, serializer):
         seller = Seller.objects.get(user=self.request.user)
+        instance = self.get_object()
         if instance.created_by_seller != seller:
-            raise serializers.ValidationError("You cannot edit other sellers's products.")
-
-        serializer = CreateProductSerializer(instance, data=request.data, partial=partial,
-                                             context={'user_id': self.request.user.id})
-        serializer.is_valid(raise_exception=True)
+            raise serializers.ValidationError("You cannot edit other sellers' products")
         serializer.save()
-        return Response(serializer.data)
 
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
+    def perform_destroy(self, instance):
         seller = Seller.objects.get(user=self.request.user)
         if instance.created_by_seller != seller:
-            raise serializers.ValidationError("You cannot delete other sellers products.")
-
-        return super().destroy(request, *args, **kwargs)
+            raise serializers.ValidationError("You cannot delete other sellers' products")
+        instance.delete()
 
 
 class CartList(APIView):

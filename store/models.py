@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.validators import MinValueValidator
 from django.db import models
 
 
@@ -35,7 +36,7 @@ class Customer(models.Model):
 class Product(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
-    price = models.DecimalField(decimal_places=2, max_digits=10)
+    price = models.DecimalField(decimal_places=2, max_digits=10, validators=[MinValueValidator(0.01)])
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -43,6 +44,9 @@ class Product(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.price}"
+
+    class Meta:
+        ordering = ['-created_at']
 
 
 class Order(models.Model):
