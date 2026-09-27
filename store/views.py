@@ -2,7 +2,8 @@ from django.contrib import messages
 from django.contrib.auth import login, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from django.shortcuts import render, redirect
+from django.db import transaction
+from django.shortcuts import render, redirect, get_object_or_404
 from openid.server.trustroot import returnToMatches
 from rest_framework import status, permissions, serializers
 from rest_framework.decorators import action
@@ -51,7 +52,7 @@ def home(request):
 
 # Product Views
 def product_detail(request, pk):
-    product = Product.objects.get(pk=pk)
+    product = get_object_or_404(Product, pk=pk)
     related_products = Product.objects.filter(category=product.category).exclude(id=pk)
     seller = Seller.objects.get(pk=product.created_by_seller.pk)
     context = {'product': product, 'related_products': related_products, 'seller': seller.user}
@@ -71,7 +72,6 @@ def add_product(request):
             return redirect('home')
         else:
             messages.error(request, 'Invalid New Product')
-            render(request, 'store/add_product_form.html', {'form': form})
 
     return render(request, 'store/add_product_form.html', {'form': form})
 
@@ -94,15 +94,16 @@ def edit_product(request, pk):
             return redirect('home')
         else:
             messages.error(request, 'Cannot edit Product')
-            return render(request, 'store/edit_product_form.html', {'form': form})
 
     return render(request, 'store/edit_product_form.html', {'form': form})
 
 
 def delete_product(request, pk):
-    # TODO rewrite method
-    product = Product.objects.get(pk=pk)
-    product.delete()
+    if request.method == "POST":
+        product = Product.objects.get(pk=pk)
+        product.delete()
+    else:
+        messages.error(request, "You don't have permission to delete this product!")
     return redirect('home')
 
 
@@ -114,24 +115,24 @@ def view_created_products(request):
 
 @login_required(login_url='/login/')
 def update_user_profile(request):
-    current_user_profile = None
-    form = None
-    current_user = get_user_model().objects.get(id=request.user.id)
+    current_user = request.user
     if current_user.is_seller:
-        current_user_profile = Seller.objects.get(user=request.user)
+        current_user_profile = Seller.objects.get(user=current_user)
         form = SellerForm(request.POST or None, instance=current_user_profile)
     elif current_user.is_customer:
-        current_user_profile = Customer.objects.get(user=request.user)
+        current_user_profile = Customer.objects.get(user=current_user)
         form = CustomerForm(request.POST or None, instance=current_user_profile)
     else:
         messages.error(request, "You are not a customer or seller")
         return redirect('home')
 
-    if form.is_valid():
-        form.save()
-        login(request, current_user)
-        messages.success(request, 'You have successfully updated your profile.')
-        return redirect('home')
+    if request.method == 'POST':
+        if form.is_valid():
+            form.save()
+            login(request, current_user)
+            messages.success(request, 'You have successfully updated your profile.')
+            return redirect('home')
+        messages.error(request, 'Cannot edit Profile')
     return render(request, 'store/update_user_profile_form.html', {'form': form})
 
 
@@ -142,10 +143,8 @@ def add_category(request):
         category_name = request.POST['category_name']
         Category.objects.create(name=category_name)
         return redirect('home')
-    elif request.method == 'GET':
-        return render(request, 'store/add_category_form.html')
-    else:
-        return redirect('home')
+
+    return render(request, 'store/add_category_form.html')
 
 
 def list_categories(request):
@@ -158,15 +157,15 @@ def list_categories(request):
 @customer_required
 def add_product_to_cart(request, pk):
     if request.method == 'POST':
-        customer = Customer.objects.get(user=request.user)
-        if not Cart.objects.filter(created_by_customer=customer).exists():
-            Cart.objects.create(created_by_customer=customer)
+        customer = request.user.customer
+        cart, created = Cart.objects.get_or_create(user=customer)
 
-        product = Product.objects.get(id=pk)
+        product = get_object_or_404(Product, id=pk)
 
-        quantity = request.POST.get("productQuantity")
-        cartItem, created = CartItem.objects.get_or_create(cart=customer.cart, productItem=product)
-        cartItem.quantity = int(quantity)
+        quantity = int(request.POST.get("productQuantity"))
+
+        cartItem, created = CartItem.objects.get_or_create(cart=cart, productItem=product)
+        cartItem.quantity = quantity
         cartItem.save()
         return redirect(request.META.get("HTTP_REFERER", "/"))
     else:
@@ -176,49 +175,48 @@ def add_product_to_cart(request, pk):
 
 @customer_required
 def show_cart(request):
-    customer = Customer.objects.get(user=request.user)
-    if not Cart.objects.filter(created_by_customer=customer).exists():
-        Cart.objects.create(created_by_customer=customer)
+    customer = request.user.customer
+    cart, _ = Cart.objects.get_or_create(created_by_customer=customer)
 
-    cart = Cart.objects.get(created_by_customer=customer)
-    items = cart.items.all()
-    total = 0
-    for item in items:
-        total += item.productItem.price
+    items = cart.items.select_related('productItem').all()
+    total = sum(item.productItem.price * item.quantity for item in items)
 
     return render(request, 'store/show_cart.html', {'cart': cart, 'items': items, 'total': total})
 
 
 @customer_required
 def delete_item(request, pk):
-    # TODO rewrite method
-    customer = Customer.objects.get(user=request.user)
-    cart = Cart.objects.get(created_by_customer=customer)
-    CartItem.objects.get(cart=cart, productItem=Product.objects.get(pk=pk)).delete()
+    if request.method == 'POST':
+        current_user = request.user
+        cart = get_object_or_404(Cart, created_by_customer__user=current_user)
+        CartItem.objects.filter(cart=cart, productItem_id=pk).delete()
+    else:
+        messages.error(request, 'You do not have permission to delete the item!')
     return redirect('show_cart')
 
 
 # Order views
 @customer_required
 def checkout_order(request):
-    # TODO rewrite method
-    customer = Customer.objects.get(user=request.user)
-    cart = Cart.objects.get(created_by_customer=customer)
+    if request.method == "POST":
+        customer = request.user.customer
+        cart = customer.cart
 
-    order = Order.objects.create(customer=customer)
-    items = cart.items.all()
+        order = Order.objects.create(customer=customer)
+        items = cart.items.select_related('productItem').all()
 
-    for item in items:
-        OrderItem.objects.create(order=order, product=item.productItem, quantity=item.quantity,
-                                 price=item.productItem.price)
-
-    cart.delete()
+        for item in items:
+            OrderItem.objects.create(order=order, product=item.productItem, quantity=item.quantity,
+                                     price=item.productItem.price)
+        cart.delete()
+    else:
+        messages.error(request, 'You do not have permission to add a new order')
     return redirect('home')
 
 
 @customer_required
 def show_orders(request):
-    customer = Customer.objects.get(user=request.user)
+    customer = request.user.customer
     orders = customer.orders.all()
     return render(request, 'store/show_orders.html', {'orders': orders})
 
@@ -226,10 +224,10 @@ def show_orders(request):
 @customer_required
 def show_order_detail(request, pk):
     order = Order.objects.prefetch_related('items').get(id=pk)
-    total_price = 0
-    for item in order.items.all():
-        total_price += item.price * item.quantity
-
+    if order.customer.user != request.user:
+        messages.error(request, 'You do not have permission to view this order!')
+        return redirect('home')
+    total_price = sum(item.price * item.quantity for item in order.items.all())
     context = {'order': order, 'total_price': total_price}
     return render(request, 'store/show_order_detail.html', context)
 
