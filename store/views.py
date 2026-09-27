@@ -305,48 +305,26 @@ class CustomerCartView(APIView):
 
 class CartItemViewSet(ModelViewSet):
     permission_classes = [IsCustomerUser]
-    queryset = CartItem.objects.all()
+
+    def get_queryset(self):
+        customer = Customer.objects.get(user=self.request.user)
+        return CartItem.objects.select_related("productItem").filter(cart__created_by_customer=customer)
 
     def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return CartItemSerializer
-        elif self.request.method == 'POST':
+        if self.request.method == "POST":
             return AddCartItemSerializer
         elif self.request.method in ['PUT', 'PATCH']:
             return UpdateCartItemSerializer
+        return CartItemSerializer
 
     def get_serializer_context(self):
-        created_by_customer = Customer.objects.get(user=self.request.user)
-        cart = get_object_or_404(Cart, created_by_customer=created_by_customer)
-        if self.request.method == 'POST':
-            return {'cart': cart}
-        elif self.request.method in ['PUT', 'PATCH']:
-            return {'customer': created_by_customer}
+        context = super().get_serializer_context()
+        if self.request.method == "POST":
+            customer = Customer.objects.get(user=self.request.user)
+            cart, created = Cart.objects.get_or_create(created_by_customer=customer)
+            context['cart'] = cart
 
-    def list(self, request, *args, **kwargs):
-        created_by_customer = Customer.objects.get(user=request.user)
-        cart = get_object_or_404(Cart, created_by_customer=created_by_customer)
-        cart_items = CartItem.objects.select_related('productItem').filter(cart=cart)
-        serializer = CartItemSerializer(cart_items, many=True)
-        return Response(serializer.data)
-
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        customer = Customer.objects.get(user=self.request.user)
-        cart = get_object_or_404(Cart, items__id=instance.id)
-        if cart.created_by_customer != customer:
-            raise serializers.ValidationError("You cannot view other customers items.")
-        serializer = CartItemSerializer(instance)
-        return Response(serializer.data)
-
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        customer = Customer.objects.get(user=self.request.user)
-        cart = get_object_or_404(Cart, items__id=instance.id)
-        if cart.created_by_customer != customer:
-            raise serializers.ValidationError("You cannot delete other customers items.")
-        instance.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return context
 
 
 class CustomerViewSet(ModelViewSet):

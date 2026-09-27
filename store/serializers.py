@@ -70,14 +70,9 @@ class AddCartItemSerializer(serializers.ModelSerializer):
         productItem_id = self.validated_data['productItem_id']
         quantity = self.validated_data['quantity']
 
-        try:
-            cart_item = CartItem.objects.get(cart=cart, productItem_id=productItem_id)
-            cart_item.quantity += quantity
-            cart_item.save()
-            self.instance = cart_item
-        except CartItem.DoesNotExist:
-            self.instance = CartItem.objects.create(cart=cart, **self.validated_data)
-
+        cart_item, created = CartItem.objects.get_or_create(cart=cart, productItem_id=productItem_id,
+                                                            defaults={'quantity': quantity})
+        self.instance = cart_item
         return self.instance
 
     class Meta:
@@ -95,15 +90,6 @@ class UpdateCartItemSerializer(serializers.ModelSerializer):
         model = CartItem
         fields = ['id', 'quantity']
 
-    def save(self, **kwargs):
-        customer = self.context['customer']
-
-        instance = self.instance
-        cart = get_object_or_404(Cart, items__id=instance.id)
-        if cart.created_by_customer != customer:
-            raise serializers.ValidationError('CartItem does not belong to this customer')
-
-        super().save(**kwargs)
 
 
 class CustomerSerializer(serializers.ModelSerializer):
