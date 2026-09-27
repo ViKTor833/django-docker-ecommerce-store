@@ -11,9 +11,9 @@ class IsAdminOrReadOnly(BasePermission):
 
 class IsCustomerUser(BasePermission):
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.user_type in ["C", "A"])
+        return bool(request.user and request.user.is_authenticated and request.user.is_customer)
 
 
 class IsSellerUser(BasePermission):
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.user_type in ["S", "A"])
+        return bool(request.user and request.user.is_authenticated and request.user.is_seller)

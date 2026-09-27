@@ -9,6 +9,7 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['id', 'name']
+        read_only_fields = ['id']
 
 
 class ListProductSerializer(serializers.ModelSerializer):
@@ -83,7 +84,7 @@ class AddCartItemSerializer(serializers.ModelSerializer):
         model = CartItem
         fields = ['id', 'productItem_id', 'quantity']
 
-    def validate_productItemd_id(self, value):
+    def validate_productItem_id(self, value):
         if not Product.objects.filter(pk=value).exists():
             raise serializers.ValidationError('Product does not exist')
         return value

@@ -158,7 +158,7 @@ def list_categories(request):
 def add_product_to_cart(request, pk):
     if request.method == 'POST':
         customer = request.user.customer
-        cart, created = Cart.objects.get_or_create(user=customer)
+        cart, created = Cart.objects.get_or_create(created_by_customer=customer)
 
         product = get_object_or_404(Product, id=pk)
 
@@ -207,7 +207,7 @@ def checkout_order(request):
 
             for item in items:
                 OrderItem.objects.create(order=order, product=item.productItem, quantity=item.quantity,
-                                         price=item.productItem.price)
+                                         price=item.productItem.price, product_name=item.productItem.name)
             cart.delete()
     else:
         messages.error(request, 'You do not have permission to add a new order')
