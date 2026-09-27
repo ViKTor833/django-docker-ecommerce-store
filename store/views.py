@@ -162,7 +162,7 @@ def add_product_to_cart(request, pk):
 
         product = get_object_or_404(Product, id=pk)
 
-        quantity = int(request.POST.get("productQuantity"))
+        quantity = int(request.POST.get("productQuantity", 1))
 
         cartItem, created = CartItem.objects.get_or_create(cart=cart, productItem=product)
         cartItem.quantity = quantity
@@ -201,14 +201,14 @@ def checkout_order(request):
     if request.method == "POST":
         customer = request.user.customer
         cart = customer.cart
+        with transaction.atomic():
+            order = Order.objects.create(customer=customer)
+            items = cart.items.select_related('productItem').all()
 
-        order = Order.objects.create(customer=customer)
-        items = cart.items.select_related('productItem').all()
-
-        for item in items:
-            OrderItem.objects.create(order=order, product=item.productItem, quantity=item.quantity,
-                                     price=item.productItem.price)
-        cart.delete()
+            for item in items:
+                OrderItem.objects.create(order=order, product=item.productItem, quantity=item.quantity,
+                                         price=item.productItem.price)
+            cart.delete()
     else:
         messages.error(request, 'You do not have permission to add a new order')
     return redirect('home')
