@@ -278,38 +278,27 @@ class ProductViewSet(ModelViewSet):
         instance.delete()
 
 
-class CartList(APIView):
-
-    def get_permissions(self):
-        if self.request.method == "POST":
-            return [IsCustomerUser()]
-        return [IsAdminUser()]
+class AdminCartList(APIView):
+    permission_classes = [IsAdminUser]
 
     def get(self, request):
-        carts = Cart.objects.all()
+        carts = Cart.objects.select_related("created_by_customer__user").prefetch_related("items__productItem").all()
         serializer = CartSerializer(carts, many=True)
         return Response(serializer.data)
 
-    def post(self, request):
-        created_by_customer = Customer.objects.get(user=request.user)
-        (cart, created) = Cart.objects.get_or_create(created_by_customer=created_by_customer)
-        serializer = CartSerializer(cart)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-
-class CartDetail(APIView):
+class CustomerCartView(APIView):
     permission_classes = [IsCustomerUser]
 
     def get(self, request):
-        created_by_customer = Customer.objects.get(user=request.user)
-        cart = get_object_or_404(Cart.objects.prefetch_related("items__productItem"),
-                                 created_by_customer=created_by_customer)
+        customer = Customer.objects.get(user=request.user)
+        cart, created = Cart.objects.prefetch_related("items__productItem").get_or_create(created_by_customer=customer)
         serializer = CartSerializer(cart)
         return Response(serializer.data)
 
     def delete(self, request):
-        created_by_customer = Customer.objects.get(user=request.user)
-        cart = get_object_or_404(Cart, created_by_customer=created_by_customer)
+        customer = Customer.objects.get(user=request.user)
+        cart = get_object_or_404(Cart, created_by_customer=customer)
         cart.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 

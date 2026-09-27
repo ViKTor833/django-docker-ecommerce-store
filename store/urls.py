@@ -33,7 +33,7 @@ urlpatterns = [
 
     # ---API-Paths---
     path('api/', include(router.urls)),
-    path('api/carts/', views.CartList.as_view()),
-    path('api/carts/mycart/', views.CartDetail.as_view()),
+    path('api/carts/', views.AdminCartList.as_view()),
+    path('api/carts/mycart/', views.CustomerCartView.as_view()),
     path('api/carts/mycart/', include(router2.urls)),
 ]
