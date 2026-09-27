@@ -91,7 +91,6 @@ class UpdateCartItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'quantity']
 
 
-
 class CustomerSerializer(serializers.ModelSerializer):
     user_id = serializers.IntegerField(read_only=True)
 
@@ -130,22 +129,25 @@ class CreateOrderSerializer(serializers.Serializer):
     def save(self, **kwargs):
         with transaction.atomic():
             customer = Customer.objects.get(user_id=self.context['user_id'])
-            if not Cart.objects.filter(created_by_customer=customer).exists():
-                raise serializers.ValidationError("Cart does not exist")
-            cart = Cart.objects.get(created_by_customer=customer)
-            if CartItem.objects.filter(cart=cart).count() == 0:
-                raise serializers.ValidationError("Cart is empty")
+
+            cart = get_object_or_404(Cart, created_by_customer=customer)
+            cart_items = CartItem.objects.select_related("productItem").filter(cart=cart)
+            if not cart_items.exists():
+                raise serializers.ValidationError('Cart is empty!')
+
             order = Order.objects.create(customer=customer)
 
-            cart_items = CartItem.objects.select_related('productItem').filter(cart=cart)
             order_items = [OrderItem(
                 order=order,
                 product=item.productItem,
+                product_name=item.productItem.name,
                 price=item.productItem.price,
                 quantity=item.quantity
             ) for item in cart_items]
+
             OrderItem.objects.bulk_create(order_items)
             cart.delete()
+
             return order
 
 

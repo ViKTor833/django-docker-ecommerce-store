@@ -370,24 +370,33 @@ class SellerViewSet(ModelViewSet):
 
 class OrderViewSet(ModelViewSet):
     http_method_names = ['get', 'post', 'patch']
-    permission_classes = [IsCustomerUser]
+
+    def get_permissions(self):
+        if self.request.method == "POST":
+            return [IsCustomerUser()]
+        elif self.request.method in ['PUT', 'PATCH']:
+            return [IsAdminUser()]
+        return [IsCustomerUser()]
 
     def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return OrderSerializer
-        elif self.request.method == 'POST':
+        if self.request.method == 'POST':
             return CreateOrderSerializer
         elif self.request.method in ['PUT', 'PATCH']:
             return UpdateOrderSerializer
+        return OrderSerializer
 
     def get_serializer_context(self):
+        context = super().get_serializer_context()
         if self.request.method == 'POST':
-            return {'user_id': self.request.user.id}
+            context['user_id'] = self.request.user.id
+        return context
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_staff:
-            return Order.objects.all()
+        queryset = Order.objects.select_related("customer__user").prefetch_related("items__productItem")
 
-        customer = Customer.objects.get(user=self.request.user)
-        return Order.objects.filter(customer=customer)
+        if user.is_staff or user.is_admin:
+            return queryset.all()
+
+        customer = Customer.objects.get(user=user)
+        return queryset.filter(customer=customer)
