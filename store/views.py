@@ -1,14 +1,14 @@
 from django.contrib import messages
-from django.contrib.auth import login, get_user_model
+from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
-from openid.server.trustroot import returnToMatches
+
 from rest_framework import status, permissions, serializers
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
+from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
@@ -52,10 +52,9 @@ def home(request):
 
 # Product Views
 def product_detail(request, pk):
-    product = get_object_or_404(Product, pk=pk)
+    product = get_object_or_404(Product.objects.select_related('category', 'created_by_seller__user'), pk=pk)
     related_products = Product.objects.filter(category=product.category).exclude(id=pk)
-    seller = Seller.objects.get(pk=product.created_by_seller.pk)
-    context = {'product': product, 'related_products': related_products, 'seller': seller.user}
+    context = {'product': product, 'related_products': related_products, 'seller': product.created_by_seller.user}
     return render(request, 'store/product_detail.html', context)
 
 
@@ -109,8 +108,9 @@ def delete_product(request, pk):
 
 @seller_required
 def view_created_products(request):
-    seller = Seller.objects.get(user=request.user)
-    return render(request, "store/view_created_products.html", {'products': seller.all_products.all()})
+    seller = request.user.seller
+    products = seller.all_products.select_related('category').all()
+    return render(request, "store/view_created_products.html", {'products': products})
 
 
 @login_required(login_url='/login/')
@@ -178,7 +178,7 @@ def show_cart(request):
     customer = request.user.customer
     cart, _ = Cart.objects.get_or_create(created_by_customer=customer)
 
-    items = cart.items.select_related('productItem').all()
+    items = cart.items.select_related('productItem__category').all()
     total = sum(item.productItem.price * item.quantity for item in items)
 
     return render(request, 'store/show_cart.html', {'cart': cart, 'items': items, 'total': total})
@@ -217,13 +217,14 @@ def checkout_order(request):
 @customer_required
 def show_orders(request):
     customer = request.user.customer
-    orders = customer.orders.all()
+    orders = customer.orders.select_related('customer__user').all()
     return render(request, 'store/show_orders.html', {'orders': orders})
 
 
 @customer_required
 def show_order_detail(request, pk):
-    order = Order.objects.prefetch_related('items').get(id=pk)
+    order = get_object_or_404(Order.objects.select_related('customer__user').prefetch_related('items'), id=pk)
+
     if order.customer.user != request.user:
         messages.error(request, 'You do not have permission to view this order!')
         return redirect('home')
@@ -234,7 +235,7 @@ def show_order_detail(request, pk):
 
 @admin_required
 def show_all_orders(request):
-    orders = Order.objects.all()
+    orders = Order.objects.select_related('customer__user').all()
     return render(request, 'store/show_orders.html', {'orders': orders})
 
 

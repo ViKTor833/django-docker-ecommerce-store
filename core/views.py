@@ -1,4 +1,4 @@
-from django.contrib.auth import authenticate, login, logout, get_user_model
+from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
@@ -61,7 +61,7 @@ def logout_user(request):
 
 @login_required(login_url='login')
 def change_password(request):
-    current_user = get_user_model().objects.get(id=request.user.id)
+    current_user = request.user
     if request.method == 'POST':
         form = ChangePasswordForm(current_user, request.POST)
         if form.is_valid():
@@ -80,7 +80,7 @@ def change_password(request):
 
 @login_required(login_url='login')
 def update_user(request):
-    current_user = get_user_model().objects.get(id=request.user.id)
+    current_user = request.user
     form = UpdateUserForm(request.POST or None, instance=current_user)
 
     if form.is_valid():

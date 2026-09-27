@@ -11,7 +11,7 @@ router.register('sellers', views.SellerViewSet)
 router.register('orders', views.OrderViewSet, basename='orders')
 
 router2 = DefaultRouter()
-router2.register('items', views.CartItemViewSet)
+router2.register('items', views.CartItemViewSet, basename='items')
 
 urlpatterns = [
     path('', views.home, name='home'),
