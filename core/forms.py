@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import UserCreationForm, UserChangeForm, SetPasswordForm
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm, PasswordChangeForm
 
 
 class SignUpForm(UserCreationForm):
@@ -26,11 +26,11 @@ class UpdateUserForm(UserChangeForm):
             if not isinstance(field.widget, forms.CheckboxInput):
                 field.widget.attrs['class'] = 'form-control'
 
-#TODO change password from
-class ChangePasswordForm(SetPasswordForm):
+
+class ChangePasswordForm(PasswordChangeForm):
     class Meta:
         model = get_user_model()
-        fields = ['new_password1', 'new_password2']
+        fields = ['old_password', 'new_password1', 'new_password2']
 
     def __init__(self, *args, **kwargs):
         super(ChangePasswordForm, self).__init__(*args, **kwargs)
