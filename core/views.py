@@ -1,4 +1,4 @@
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
@@ -69,7 +69,7 @@ def change_password(request):
         form = ChangePasswordForm(current_user, request.POST)
         if form.is_valid():
             form.save()
-            login(request, current_user)
+            update_session_auth_hash(request, current_user)
             messages.success(request, 'You have successfully updated your password.')
             return redirect('home')
 
