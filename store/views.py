@@ -121,26 +121,48 @@ def view_created_products(request):
 @require_http_methods(["GET", "POST"])
 def update_user_profile(request):
     current_user = request.user
-    if current_user.is_seller:
-        current_user_profile = Seller.objects.get(user=current_user)
-        form = SellerForm(request.POST or None, instance=current_user_profile)
+    customer_form = None
+    seller_form = None
+    form = None
+    if current_user.is_admin:
+        customer_profile = Customer.objects.get(user=current_user)
+        seller_profile = Seller.objects.get(user=current_user)
+        customer_form = CustomerForm(request.POST or None, instance=customer_profile)
+        seller_form = SellerForm(request.POST or None, instance=seller_profile)
+    elif current_user.is_seller:
+        seller_profile = Seller.objects.get(user=current_user)
+        form = SellerForm(request.POST or None, instance=seller_profile)
     elif current_user.is_customer:
-        current_user_profile = Customer.objects.get(user=current_user)
-        form = CustomerForm(request.POST or None, instance=current_user_profile)
-    else:
-        # TODO add a case for admin users
-        messages.error(request, "You are not a customer or seller")
-        return redirect('home')
+        customer_form = Customer.objects.get(user=current_user)
+        form = CustomerForm(request.POST or None, instance=customer_form)
 
     if request.method == 'POST':
-        if form.is_valid():
-            form.save()
-            login(request, current_user)
-            messages.success(request, 'You have successfully updated your profile.')
-            return redirect('home')
-        messages.error(request, 'Cannot edit Profile')
-    return render(request, 'store/update_user_profile_form.html', {'form': form})
+        if current_user.is_admin:
+            if customer_form.is_valid() and seller_form.is_valid():
+                customer_form.save()
+                seller_form.save()
+                messages.success(request, 'You have successfully updated your profile.')
+                return redirect('home')
+            else:
+                messages.error(request, 'Invalid form data.')
+        else:
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'You have successfully updated your profile.')
+                return redirect('home')
+            else:
+                messages.error(request, 'Invalid form data.')
+    context = {
+        'customer_form': customer_form,
+        'seller_form': seller_form,
+        'form': form,
+    }
+    return render(request, 'store/update_user_profile_form.html', context)
 
+
+# else:
+#     messages.error(request, "You are not a customer or seller")
+#     return redirect('home')
 
 # Category Views
 @admin_required

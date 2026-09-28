@@ -6,10 +6,26 @@
     <form method="post" action="{% url 'update_user_profile' %}">
         {% csrf_token %}
 
+        {% if request.user.is_admin %}
+
+        <h3 class="my-4">Customer Profile:</h3>
+        {{ customer_form.as_p }}
+        <h3 class="my-4">Seller Profile:</h3>
+        {{ seller_form.as_p }}
+
+        {% else %}
+
         {{form.as_p}}
+
+        {% endif %}
+
         <br>
-        <div class="row ">
-            <button type="submit" class="btn btn-primary ">Update Profile</button>
+
+        <div class="row">
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary ">Update Profile</button>
+            </div>
+
         </div>
         <br>
     </form>
