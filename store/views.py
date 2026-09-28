@@ -160,10 +160,6 @@ def update_user_profile(request):
     return render(request, 'store/update_user_profile_form.html', context)
 
 
-# else:
-#     messages.error(request, "You are not a customer or seller")
-#     return redirect('home')
-
 # Category Views
 @admin_required
 @require_http_methods(["GET", "POST"])

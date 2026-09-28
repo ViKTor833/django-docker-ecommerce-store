@@ -86,10 +86,11 @@ def change_password(request):
 def update_user(request):
     current_user = request.user
     form = UpdateUserForm(request.POST or None, instance=current_user)
-
-    if form.is_valid():
-        form.save()
-        login(request, current_user)
-        messages.success(request, 'You have successfully updated your user account.')
-        return redirect('home')
+    if request.method == 'POST':
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'You have successfully updated your user account.')
+            return redirect('home')
+        else:
+            messages.error(request, 'Cannot edit user account!')
     return render(request, 'core/update_user_form.html', {'form': form})
