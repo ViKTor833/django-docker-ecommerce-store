@@ -11,7 +11,7 @@
             {% if request.user.is_admin %}
             <th scope="col">Created by</th>
             {% endif %}
-            <th scope="col">*</th>
+            <th scope="col"></th>
         </tr>
         </thead>
         <tbody>
@@ -23,7 +23,7 @@
             {% if request.user.is_admin %}
             <td>{{ order.customer }}</td>
             {% endif %}
-            <td><a href="{% url 'show_order_detail' order.id %}">View</a></td>
+            <td><a class="btn btn-outline-secondary" href="{% url 'show_order_detail' order.id %}">View</a></td>
         </tr>
         {% endfor %}
         </tbody>
