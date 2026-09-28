@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from rest_framework import status, permissions, serializers
 from rest_framework.decorators import action
@@ -23,6 +24,7 @@ from .decorators import admin_required, seller_required, customer_required
 
 
 # Create your views here.
+@require_GET
 def home(request):
     products = Product.objects.all()
     filter_type = request.GET.get('filter_type', '')
@@ -51,6 +53,7 @@ def home(request):
 
 
 # Product Views
+@require_GET
 def product_detail(request, pk):
     product = get_object_or_404(Product.objects.select_related('category', 'created_by_seller__user'), pk=pk)
     related_products = Product.objects.filter(category=product.category).exclude(id=pk)
@@ -59,6 +62,7 @@ def product_detail(request, pk):
 
 
 @seller_required
+@require_http_methods(["GET", "POST"])
 def add_product(request):
     form = ProductForm()
     if request.method == 'POST':
@@ -76,6 +80,7 @@ def add_product(request):
 
 
 @seller_required
+@require_http_methods(["GET", "POST"])
 def edit_product(request, pk):
     product = Product.objects.get(id=pk)
 
@@ -97,16 +102,15 @@ def edit_product(request, pk):
     return render(request, 'store/edit_product_form.html', {'form': form})
 
 
+@require_POST
 def delete_product(request, pk):
-    if request.method == "POST":
-        product = Product.objects.get(pk=pk)
-        product.delete()
-    else:
-        messages.error(request, "You don't have permission to delete this product!")
+    product = Product.objects.get(pk=pk)
+    product.delete()
     return redirect('home')
 
 
 @seller_required
+@require_GET
 def view_created_products(request):
     seller = request.user.seller
     products = seller.all_products.select_related('category').all()
@@ -114,6 +118,7 @@ def view_created_products(request):
 
 
 @login_required(login_url='/login/')
+@require_http_methods(["GET", "POST"])
 def update_user_profile(request):
     current_user = request.user
     if current_user.is_seller:
@@ -123,6 +128,7 @@ def update_user_profile(request):
         current_user_profile = Customer.objects.get(user=current_user)
         form = CustomerForm(request.POST or None, instance=current_user_profile)
     else:
+        # TODO add a case for admin users
         messages.error(request, "You are not a customer or seller")
         return redirect('home')
 
@@ -138,6 +144,7 @@ def update_user_profile(request):
 
 # Category Views
 @admin_required
+@require_http_methods(["GET", "POST"])
 def add_category(request):
     if request.method == 'POST':
         category_name = request.POST['category_name']
@@ -147,6 +154,7 @@ def add_category(request):
     return render(request, 'store/add_category_form.html')
 
 
+@require_GET
 def list_categories(request):
     categories = Category.objects.all()
     context = {'categories': categories}
@@ -155,25 +163,20 @@ def list_categories(request):
 
 # Cart views
 @customer_required
+@require_POST
 def add_product_to_cart(request, pk):
-    if request.method == 'POST':
-        customer = request.user.customer
-        cart, created = Cart.objects.get_or_create(created_by_customer=customer)
-
-        product = get_object_or_404(Product, id=pk)
-
-        quantity = int(request.POST.get("productQuantity", 1))
-
-        cartItem, created = CartItem.objects.get_or_create(cart=cart, productItem=product)
-        cartItem.quantity = quantity
-        cartItem.save()
-        return redirect(request.META.get("HTTP_REFERER", "/"))
-    else:
-        messages.error(request, 'You do not have permission to add a new product')
-        return redirect('home')
+    customer = request.user.customer
+    cart, created = Cart.objects.get_or_create(created_by_customer=customer)
+    product = get_object_or_404(Product, id=pk)
+    quantity = int(request.POST.get("productQuantity", 1))
+    cartItem, created = CartItem.objects.get_or_create(cart=cart, productItem=product)
+    cartItem.quantity = quantity
+    cartItem.save()
+    return redirect(request.META.get("HTTP_REFERER", "/"))
 
 
 @customer_required
+@require_GET
 def show_cart(request):
     customer = request.user.customer
     cart, _ = Cart.objects.get_or_create(created_by_customer=customer)
@@ -185,36 +188,34 @@ def show_cart(request):
 
 
 @customer_required
+@require_POST
 def delete_item(request, pk):
-    if request.method == 'POST':
-        current_user = request.user
-        cart = get_object_or_404(Cart, created_by_customer__user=current_user)
-        CartItem.objects.filter(cart=cart, productItem_id=pk).delete()
-    else:
-        messages.error(request, 'You do not have permission to delete the item!')
+    current_user = request.user
+    cart = get_object_or_404(Cart, created_by_customer__user=current_user)
+    CartItem.objects.filter(cart=cart, productItem_id=pk).delete()
     return redirect('show_cart')
 
 
 # Order views
 @customer_required
+@require_POST
 def checkout_order(request):
-    if request.method == "POST":
-        customer = request.user.customer
-        cart = customer.cart
-        with transaction.atomic():
-            order = Order.objects.create(customer=customer)
-            items = cart.items.select_related('productItem').all()
+    customer = request.user.customer
+    cart = customer.cart
+    with transaction.atomic():
+        order = Order.objects.create(customer=customer)
+        items = cart.items.select_related('productItem').all()
 
-            for item in items:
-                OrderItem.objects.create(order=order, product=item.productItem, quantity=item.quantity,
-                                         price=item.productItem.price, product_name=item.productItem.name)
-            cart.delete()
-    else:
-        messages.error(request, 'You do not have permission to add a new order')
+        for item in items:
+            OrderItem.objects.create(order=order, product=item.productItem, quantity=item.quantity,
+                                     price=item.productItem.price, product_name=item.productItem.name)
+        cart.delete()
+
     return redirect('home')
 
 
 @customer_required
+@require_GET
 def show_orders(request):
     customer = request.user.customer
     orders = customer.orders.select_related('customer__user').all()
@@ -222,6 +223,7 @@ def show_orders(request):
 
 
 @customer_required
+@require_GET
 def show_order_detail(request, pk):
     order = get_object_or_404(Order.objects.select_related('customer__user').prefetch_related('items'), id=pk)
 
@@ -234,6 +236,7 @@ def show_order_detail(request, pk):
 
 
 @admin_required
+@require_GET
 def show_all_orders(request):
     orders = Order.objects.select_related('customer__user').all()
     return render(request, 'store/show_orders.html', {'orders': orders})

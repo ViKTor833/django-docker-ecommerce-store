@@ -26,7 +26,7 @@ class UpdateUserForm(UserChangeForm):
             if not isinstance(field.widget, forms.CheckboxInput):
                 field.widget.attrs['class'] = 'form-control'
 
-
+#TODO change password from
 class ChangePasswordForm(SetPasswordForm):
     class Meta:
         model = get_user_model()

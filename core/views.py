@@ -2,11 +2,13 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
+from django.views.decorators.http import require_http_methods, require_POST
 
 from core.forms import SignUpForm, ChangePasswordForm, UpdateUserForm
 
 
 # Create your views here.
+@require_http_methods(["GET", "POST"])
 def register_user(request):
     form = SignUpForm()
     if request.method == 'POST':
@@ -30,12 +32,13 @@ def register_user(request):
             messages.success(request, 'You have successfully registered.')
 
             return redirect('home')
-        else:
-            messages.error(request, 'Invalid Credentials')
-            return redirect('register')
+
+        messages.error(request, 'Invalid Credentials')
+
     return render(request, 'core/register_form.html', {'form': form})
 
 
+@require_http_methods(["GET", "POST"])
 def login_user(request):
     if request.method == "POST":
         username = request.POST['username']
@@ -45,14 +48,13 @@ def login_user(request):
             login(request, user)
             messages.success(request, 'You are now logged in')
             return redirect('home')
-        else:
-            messages.error(request, 'Invalid username or password')
-            return redirect('login')
-    else:
-        return render(request, 'core/login_form.html')
+        messages.error(request, 'Invalid Credentials')
+
+    return render(request, 'core/login_form.html')
 
 
 @login_required(login_url='login')
+@require_POST
 def logout_user(request):
     logout(request)
     messages.success(request, 'You have been logged out.')
@@ -60,6 +62,7 @@ def logout_user(request):
 
 
 @login_required(login_url='login')
+@require_http_methods(["GET", "POST"])
 def change_password(request):
     current_user = request.user
     if request.method == 'POST':
@@ -69,9 +72,9 @@ def change_password(request):
             login(request, current_user)
             messages.success(request, 'You have successfully updated your password.')
             return redirect('home')
-        else:
-            messages.error(request, 'Invalid New Password')
-            return redirect('change_password')
+
+        messages.error(request, 'Invalid New Password')
+
     else:
         form = ChangePasswordForm(current_user)
 
@@ -79,6 +82,7 @@ def change_password(request):
 
 
 @login_required(login_url='login')
+@require_http_methods(["GET", "POST"])
 def update_user(request):
     current_user = request.user
     form = UpdateUserForm(request.POST or None, instance=current_user)
