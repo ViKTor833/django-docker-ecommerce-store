@@ -16,25 +16,25 @@ router2.register('items', views.CartItemViewSet, basename='items')
 urlpatterns = [
     path('', views.home, name='home'),
 
-    path("products/", views.view_created_products, name="product_list"),
-    path('product/add/', views.add_product, name='product_add'),
+    path("products/", views.product_list, name="product_list"),
+    path('product/add/', views.product_add, name='product_add'),
     path('product/<int:pk>/', views.product_detail, name='product_detail'),
-    path('product/<int:pk>/edit/', views.edit_product, name='product_edit'),
-    path('product/<int:pk>/delete/', views.delete_product, name='product_delete'),
+    path('product/<int:pk>/edit/', views.product_edit, name='product_edit'),
+    path('product/<int:pk>/delete/', views.product_delete, name='product_delete'),
 
-    path('category/add/', views.add_category, name='category_add'),
-    path('categories/', views.list_categories, name='category_list'),
+    path('category/add/', views.category_add, name='category_add'),
+    path('categories/', views.category_list, name='category_list'),
 
-    path('cart/', views.show_cart, name='cart_detail'),
-    path('cart/add/<int:pk>/', views.add_product_to_cart, name='cart_add_item'),
-    path('cart/remove/<int:pk>/', views.delete_item, name='cart_remove_item'),
+    path('cart/', views.cart_detail, name='cart_detail'),
+    path('cart/add/<int:pk>/', views.cart_add_item, name='cart_add_item'),
+    path('cart/remove/<int:pk>/', views.cart_remove_item, name='cart_remove_item'),
 
-    path('order/checkout/', views.checkout_order, name='order_checkout'),
-    path('order/<int:pk>/', views.show_order_detail, name='order_detail'),
-    path('orders/all/', views.show_all_orders, name='orders_all'),
-    path('orders/my/', views.show_my_orders, name='orders_my'),
+    path('order/checkout/', views.order_checkout, name='order_checkout'),
+    path('order/<int:pk>/', views.order_detail, name='order_detail'),
+    path('orders/all/', views.orders_all, name='orders_all'),
+    path('orders/my/', views.orders_my, name='orders_my'),
 
-    path('profile/', views.update_user_profile, name='profile_detail'),
+    path('profile/', views.profile_detail, name='profile_detail'),
     # ---API-Paths---
     path('api/', include(router.urls)),
     path('api/carts/', views.AdminCartList.as_view()),

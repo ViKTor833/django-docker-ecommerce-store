@@ -62,7 +62,7 @@ def product_detail(request, pk):
 
 @seller_required
 @require_http_methods(["GET", "POST"])
-def add_product(request):
+def product_add(request):
     form = ProductForm()
     if request.method == 'POST':
         form = ProductForm(request.POST)
@@ -80,7 +80,7 @@ def add_product(request):
 
 @seller_required
 @require_http_methods(["GET", "POST"])
-def edit_product(request, pk):
+def product_edit(request, pk):
     product = Product.objects.get(id=pk)
 
     seller = Seller.objects.get(user=request.user)
@@ -102,7 +102,7 @@ def edit_product(request, pk):
 
 
 @require_POST
-def delete_product(request, pk):
+def product_delete(request, pk):
     product = Product.objects.get(pk=pk)
     product.delete()
     return redirect('home')
@@ -110,7 +110,7 @@ def delete_product(request, pk):
 
 @seller_required
 @require_GET
-def view_created_products(request):
+def product_list(request):
     seller = request.user.seller
     products = seller.all_products.select_related('category').all()
     return render(request, "store/view_created_products.html", {'products': products})
@@ -118,7 +118,7 @@ def view_created_products(request):
 
 @login_required(login_url='/login/')
 @require_http_methods(["GET", "POST"])
-def update_user_profile(request):
+def profile_detail(request):
     current_user = request.user
     customer_form = None
     seller_form = None
@@ -162,7 +162,7 @@ def update_user_profile(request):
 # Category Views
 @admin_required
 @require_http_methods(["GET", "POST"])
-def add_category(request):
+def category_add(request):
     if request.method == 'POST':
         category_name = request.POST['category_name']
         Category.objects.create(name=category_name)
@@ -172,7 +172,7 @@ def add_category(request):
 
 
 @require_GET
-def list_categories(request):
+def category_list(request):
     categories = Category.objects.all()
     context = {'categories': categories}
     return render(request, 'store/list_categories.html', context)
@@ -181,7 +181,7 @@ def list_categories(request):
 # Cart views
 @customer_required
 @require_POST
-def add_product_to_cart(request, pk):
+def cart_add_item(request, pk):
     customer = request.user.customer
     cart, created = Cart.objects.get_or_create(created_by_customer=customer)
     product = get_object_or_404(Product, id=pk)
@@ -194,7 +194,7 @@ def add_product_to_cart(request, pk):
 
 @customer_required
 @require_GET
-def show_cart(request):
+def cart_detail(request):
     customer = request.user.customer
     cart, _ = Cart.objects.get_or_create(created_by_customer=customer)
 
@@ -206,7 +206,7 @@ def show_cart(request):
 
 @customer_required
 @require_POST
-def delete_item(request, pk):
+def cart_remove_item(request, pk):
     current_user = request.user
     cart = get_object_or_404(Cart, created_by_customer__user=current_user)
     CartItem.objects.filter(cart=cart, productItem_id=pk).delete()
@@ -216,7 +216,7 @@ def delete_item(request, pk):
 # Order views
 @customer_required
 @require_POST
-def checkout_order(request):
+def order_checkout(request):
     customer = request.user.customer
     cart = customer.cart
     with transaction.atomic():
@@ -233,7 +233,7 @@ def checkout_order(request):
 
 @customer_required
 @require_GET
-def show_my_orders(request):
+def orders_my(request):
     customer = request.user.customer
     orders = customer.orders.select_related('customer__user').all()
     return render(request, 'store/show_orders.html', {'orders': orders})
@@ -241,7 +241,7 @@ def show_my_orders(request):
 
 @customer_required
 @require_GET
-def show_order_detail(request, pk):
+def order_detail(request, pk):
     order = get_object_or_404(Order.objects.select_related('customer__user').prefetch_related('items'), id=pk)
 
     if order.customer.user != request.user:
@@ -254,7 +254,7 @@ def show_order_detail(request, pk):
 
 @admin_required
 @require_GET
-def show_all_orders(request):
+def orders_all(request):
     orders = Order.objects.select_related('customer__user').all()
     return render(request, 'store/show_orders.html', {'orders': orders})
 
