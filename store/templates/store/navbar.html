@@ -87,11 +87,9 @@
                         <li><a class="dropdown-item" href="{% url 'user_update' %}">Update User</a></li>
                         <li><a class="dropdown-item" href="{% url 'profile_detail' %}">Update Profile</a></li>
 
-                        <li>
-                            <hr class="dropdown-divider border-white">
-                        </li>
-
                         {% if request.user.is_admin %}
+                        <li><hr class="dropdown-divider border-white"></li>
+
                         <li><a class="dropdown-item" href="{% url 'orders_all' %}">View All Orders</a></li>
                         <li><a class="dropdown-item" href="{% url 'category_add' %}">Add Category</a></li>
                         {% endif %}
