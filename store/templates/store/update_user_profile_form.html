@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="container d-block">
-    <form method="post" action="{% url 'update_user_profile' %}">
+    <form method="post" action="{% url 'profile_detail' %}">
         {% csrf_token %}
 
         {% if request.user.is_admin %}

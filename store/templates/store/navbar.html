@@ -20,7 +20,7 @@
                 {% if user.is_authenticated %}
 
                 {% if request.user.is_customer %}
-                <li class="nav-item"><a class="nav-link" href="{% url 'show_orders' %}">My Orders</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'orders_my' %}">My Orders</a></li>
                 {% endif %}
 
                 {% if request.user.is_seller %}
@@ -28,8 +28,8 @@
                     <a class="nav-link dropdown-toggle" id="navbarDropdown3" href="#" role="button"
                        data-bs-toggle="dropdown" aria-expanded="false">Products</a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <li class="nav-item"><a class="nav-link" href="{% url 'add_product' %}">Add New Product</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'view_created_products' %}">View My
+                        <li class="nav-item"><a class="nav-link" href="{% url 'product_add' %}">Add New Product</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'product_list' %}">View My
                             Products</a></li>
                     </ul>
                 </li>
@@ -64,7 +64,7 @@
             </ul>
 
             {% if request.user.is_customer %}
-            <form class="d-flex mb-2 mb-lg-0 ms-lg-4 me-3" method="get" action="{% url 'show_cart' %}">
+            <form class="d-flex mb-2 mb-lg-0 ms-lg-4 me-3" method="get" action="{% url 'cart_detail' %}">
                 <button class="btn btn-outline-dark" type="submit">
                     <i class="bi-cart-fill me-1"></i>
                     Cart
@@ -85,15 +85,15 @@
                         {% if request.user.is_authenticated %}
 
                         <li><a class="dropdown-item" href="{% url 'update_user' %}">Update User</a></li>
-                        <li><a class="dropdown-item" href="{% url 'update_user_profile' %}">Update Profile</a></li>
+                        <li><a class="dropdown-item" href="{% url 'profile_detail' %}">Update Profile</a></li>
 
                         <li>
                             <hr class="dropdown-divider border-white">
                         </li>
 
                         {% if request.user.is_admin %}
-                        <li><a class="dropdown-item" href="{% url 'show_all_orders' %}">View All Orders</a></li>
-                        <li><a class="dropdown-item" href="{% url 'add_category' %}">Add Category</a></li>
+                        <li><a class="dropdown-item" href="{% url 'orders_all' %}">View All Orders</a></li>
+                        <li><a class="dropdown-item" href="{% url 'category_add' %}">Add Category</a></li>
                         {% endif %}
 
                         {% endif %}

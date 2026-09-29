@@ -23,7 +23,7 @@
             {% if request.user.is_admin %}
             <td>{{ order.customer }}</td>
             {% endif %}
-            <td><a class="btn btn-outline-secondary" href="{% url 'show_order_detail' order.id %}">View</a></td>
+            <td><a class="btn btn-outline-secondary" href="{% url 'order_detail' order.id %}">View</a></td>
         </tr>
         {% endfor %}
         </tbody>

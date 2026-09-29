@@ -210,7 +210,7 @@ def delete_item(request, pk):
     current_user = request.user
     cart = get_object_or_404(Cart, created_by_customer__user=current_user)
     CartItem.objects.filter(cart=cart, productItem_id=pk).delete()
-    return redirect('show_cart')
+    return redirect('cart_detail')
 
 
 # Order views
@@ -233,7 +233,7 @@ def checkout_order(request):
 
 @customer_required
 @require_GET
-def show_orders(request):
+def show_my_orders(request):
     customer = request.user.customer
     orders = customer.orders.select_related('customer__user').all()
     return render(request, 'store/show_orders.html', {'orders': orders})
