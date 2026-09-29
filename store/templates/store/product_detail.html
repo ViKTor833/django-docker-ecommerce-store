@@ -32,7 +32,7 @@
                 {% if request.user.is_seller and request.user == seller %}
                 <div class="row d-flex">
                     <div class="col-2">
-                        <a type="button" class="btn btn-secondary" href="{% url 'product_edit' product.id %}">Edit</a>
+                        <a type="button" class="btn btn-secondary" href="{% url 'product_update' product.id %}">Edit</a>
                     </div>
                     <div class="col">
                         <form method="post" action="{% url 'product_delete' product.id %}">

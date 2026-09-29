@@ -75,12 +75,12 @@ def product_add(request):
         else:
             messages.error(request, 'Invalid New Product')
 
-    return render(request, 'store/add_product_form.html', {'form': form})
+    return render(request, 'store/product_add.html', {'form': form})
 
 
 @seller_required
 @require_http_methods(["GET", "POST"])
-def product_edit(request, pk):
+def product_update(request, pk):
     product = Product.objects.get(id=pk)
 
     seller = Seller.objects.get(user=request.user)
@@ -98,7 +98,7 @@ def product_edit(request, pk):
         else:
             messages.error(request, 'Cannot edit Product')
 
-    return render(request, 'store/edit_product_form.html', {'form': form})
+    return render(request, 'store/product_update.html', {'form': form})
 
 
 @require_POST
@@ -113,7 +113,7 @@ def product_delete(request, pk):
 def product_list(request):
     seller = request.user.seller
     products = seller.all_products.select_related('category').all()
-    return render(request, "store/view_created_products.html", {'products': products})
+    return render(request, "store/product_list.html", {'products': products})
 
 
 @login_required(login_url='/login/')
@@ -156,7 +156,7 @@ def profile_detail(request):
         'seller_form': seller_form,
         'form': form,
     }
-    return render(request, 'store/update_user_profile_form.html', context)
+    return render(request, 'store/profile_form.html', context)
 
 
 # Category Views
@@ -168,14 +168,14 @@ def category_add(request):
         Category.objects.create(name=category_name)
         return redirect('home')
 
-    return render(request, 'store/add_category_form.html')
+    return render(request, 'store/category_add.html')
 
 
 @require_GET
 def category_list(request):
     categories = Category.objects.all()
     context = {'categories': categories}
-    return render(request, 'store/list_categories.html', context)
+    return render(request, 'store/category_list.html', context)
 
 
 # Cart views
@@ -201,7 +201,7 @@ def cart_detail(request):
     items = cart.items.select_related('productItem__category').all()
     total = sum(item.productItem.price * item.quantity for item in items)
 
-    return render(request, 'store/show_cart.html', {'cart': cart, 'items': items, 'total': total})
+    return render(request, 'store/cart_detail.html', {'cart': cart, 'items': items, 'total': total})
 
 
 @customer_required
@@ -236,7 +236,7 @@ def order_checkout(request):
 def orders_my(request):
     customer = request.user.customer
     orders = customer.orders.select_related('customer__user').all()
-    return render(request, 'store/show_orders.html', {'orders': orders})
+    return render(request, 'store/order_list.html', {'orders': orders})
 
 
 @customer_required
@@ -249,14 +249,14 @@ def order_detail(request, pk):
         return redirect('home')
     total_price = sum(item.price * item.quantity for item in order.items.all())
     context = {'order': order, 'total_price': total_price}
-    return render(request, 'store/show_order_detail.html', context)
+    return render(request, 'store/order_detail.html', context)
 
 
 @admin_required
 @require_GET
 def orders_all(request):
     orders = Order.objects.select_related('customer__user').all()
-    return render(request, 'store/show_orders.html', {'orders': orders})
+    return render(request, 'store/order_list.html', {'orders': orders})
 
 
 # -----Api Views-----
