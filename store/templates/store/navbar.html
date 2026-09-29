@@ -41,7 +41,7 @@
 
             {% if user.is_authenticated %}
             <ul class="navbar-nav  mb-2 mb-lg-0 ms-lg-4">
-                <li class="nav-item"><a class="nav-link" href="{% url 'update_user' %}"><h4>{{ user.username }}</h4></a>
+                <li class="nav-item"><a class="nav-link" href="{% url 'user_update' %}"><h4>{{ user.username }}</h4></a>
                 </li>
             </ul>
 
@@ -84,7 +84,7 @@
                         aria-labelledby="navbarDarkDropdownMenuLink">
                         {% if request.user.is_authenticated %}
 
-                        <li><a class="dropdown-item" href="{% url 'update_user' %}">Update User</a></li>
+                        <li><a class="dropdown-item" href="{% url 'user_update' %}">Update User</a></li>
                         <li><a class="dropdown-item" href="{% url 'profile_detail' %}">Update Profile</a></li>
 
                         <li>

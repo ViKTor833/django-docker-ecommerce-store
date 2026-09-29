@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="container d-block">
-    <form method="post" action="{% url 'update_user' %}">
+    <form method="post" action="{% url 'user_update' %}">
         {% csrf_token %}
 
         {{form.as_p}}
@@ -15,7 +15,7 @@
     </form>
     <br>
     <div class="row">
-        <a href="{% url 'change_password' %}" class="btn btn-secondary ">Update Password</a>
+        <a href="{% url 'user_password_change' %}" class="btn btn-secondary ">Update Password</a>
     </div>
     <br>
 </div>
