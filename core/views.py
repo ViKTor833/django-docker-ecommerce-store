@@ -9,7 +9,7 @@ from core.forms import SignUpForm, ChangePasswordForm, UpdateUserForm
 
 # Create your views here.
 @require_http_methods(["GET", "POST"])
-def register_user(request):
+def register(request):
     form = SignUpForm()
     if request.method == 'POST':
         form = SignUpForm(request.POST)
@@ -39,7 +39,7 @@ def register_user(request):
 
 
 @require_http_methods(["GET", "POST"])
-def login_user(request):
+def login(request):
     if request.method == "POST":
         username = request.POST['username']
         password = request.POST['password']
@@ -55,7 +55,7 @@ def login_user(request):
 
 @login_required(login_url='login')
 @require_POST
-def logout_user(request):
+def logout(request):
     logout(request)
     messages.success(request, 'You have been logged out.')
     return redirect('home')
@@ -63,7 +63,7 @@ def logout_user(request):
 
 @login_required(login_url='login')
 @require_http_methods(["GET", "POST"])
-def change_password(request):
+def user_password_change(request):
     current_user = request.user
     if request.method == 'POST':
         form = ChangePasswordForm(current_user, request.POST)
@@ -83,7 +83,7 @@ def change_password(request):
 
 @login_required(login_url='login')
 @require_http_methods(["GET", "POST"])
-def update_user(request):
+def user_update(request):
     current_user = request.user
     form = UpdateUserForm(request.POST or None, instance=current_user)
     if request.method == 'POST':
