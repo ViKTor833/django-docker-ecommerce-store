@@ -14,6 +14,8 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     user_type = models.CharField(max_length=1, choices=UserType, default=UserType.CUSTOMER)
 
+    REQUIRED_FIELDS = ['email', 'user_type']
+
     @property
     def is_admin(self):
         return self.user_type == UserType.ADMIN
