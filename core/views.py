@@ -39,7 +39,7 @@ def register(request):
 
 
 @require_http_methods(["GET", "POST"])
-def login(request):
+def user_login(request):
     if request.method == "POST":
         username = request.POST['username']
         password = request.POST['password']
@@ -55,7 +55,7 @@ def login(request):
 
 @login_required(login_url='login')
 @require_POST
-def logout(request):
+def user_logout(request):
     logout(request)
     messages.success(request, 'You have been logged out.')
     return redirect('home')
@@ -78,7 +78,7 @@ def user_password_change(request):
     else:
         form = ChangePasswordForm(current_user)
 
-    return render(request, 'core/change_password_form.html', {'form': form})
+    return render(request, 'core/password_change_form.html', {'form': form})
 
 
 @login_required(login_url='login')
@@ -93,4 +93,4 @@ def user_update(request):
             return redirect('home')
         else:
             messages.error(request, 'Cannot edit user account!')
-    return render(request, 'core/update_user_form.html', {'form': form})
+    return render(request, 'core/user_form.html', {'form': form})
