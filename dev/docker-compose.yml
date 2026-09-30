@@ -4,7 +4,7 @@ services:
     container_name: my_store_postgres_db_dev
     restart: always
     env_file:
-      - .env.dev
+      - .env
     ports:
       - "5432:5432"
     volumes:
@@ -27,7 +27,7 @@ services:
     ports:
       - "8000:8000"
     env_file:
-      - .env.dev
+      - .env
     depends_on:
       db:
         condition: service_healthy
