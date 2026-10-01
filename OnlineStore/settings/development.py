@@ -4,13 +4,17 @@ DEBUG = True
 
 SECRET_KEY = 'django-insecure-2l&dg&*b%_4-lz(_5_5d2g0=+f#yivz2%(^e16y53qe#+qb0h9'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS += [
     "debug_toolbar",
 ]
 
 MIDDLEWARE.insert(0, "debug_toolbar.middleware.DebugToolbarMiddleware")
+
+DEBUG_TOOLBAR_CONFIG = {
+    "SHOW_TOOLBAR_CALLBACK": lambda request: True,
+}
 
 INTERNAL_IPS = [
     "127.0.0.1",
