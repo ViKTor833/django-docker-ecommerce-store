@@ -4,6 +4,9 @@
 {% block content%}
 
 <div class="container-fluid py-5">
+
+    {% if products %}
+
     <div class="row">
         <div class="col-2">
             <form method="get" action="{% url 'home' %}">
@@ -73,6 +76,19 @@
             {% endfor %}
         </div>
     </div>
+
+    {% else %}
+
+    <div class="row p-3 m-3">
+        <div class="col text-center">
+            <h1>No products yet</h1>
+            <p class="text-muted">
+                There are currently no products available. Check back later!
+            </p>
+        </div>
+    </div>
+
+    {% endif %}
 </div>
 
 
