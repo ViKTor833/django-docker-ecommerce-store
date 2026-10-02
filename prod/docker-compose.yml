@@ -2,7 +2,7 @@ services:
   db:
     image: postgres:18
     container_name: my_store_postgres_db_prod
-    restart: always
+    restart: unless-stopped
     env_file:
       - .env
     volumes:
@@ -18,7 +18,7 @@ services:
       context: ..
       dockerfile: prod/Dockerfile
     container_name: my_store_django_prod
-    restart: always
+    restart: unless-stopped
     command: >
       sh -c "python manage.py migrate --noinput &&
              python manage.py collectstatic --noinput &&

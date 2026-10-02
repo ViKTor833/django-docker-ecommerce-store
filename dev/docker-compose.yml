@@ -2,7 +2,7 @@ services:
   db:
     image: postgres:18
     container_name: my_store_postgres_db_dev
-    restart: always
+    restart: unless-stopped
     env_file:
       - .env
     ports:
@@ -20,7 +20,7 @@ services:
       context: ..
       dockerfile: dev/Dockerfile
     container_name: my_store_django_dev
-    restart: always
+    restart: unless-stopped
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - ..:/app
