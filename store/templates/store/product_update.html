@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="container d-block">
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
 
         {{form.as_p}}

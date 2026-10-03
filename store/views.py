@@ -65,7 +65,7 @@ def product_detail(request, pk):
 def product_add(request):
     form = ProductForm()
     if request.method == 'POST':
-        form = ProductForm(request.POST)
+        form = ProductForm(request.POST, request.FILES)
         if form.is_valid():
             product = form.save(commit=False)
             seller = Seller.objects.get(user=request.user)
@@ -89,7 +89,7 @@ def product_update(request, pk):
         messages.error(request, 'You do not have permission to edit this product.')
         return redirect('home')
 
-    form = ProductForm(request.POST or None, instance=product)
+    form = ProductForm(request.POST or None, request.FILES or None, instance=product)
     if request.method == 'POST':
         if form.is_valid():
             form.save()

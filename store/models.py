@@ -33,14 +33,24 @@ class Customer(models.Model):
         return self.user.username
 
 
+dummy_img_url = "https://dummyimage.com/600x700/dee2e6/6c757d.jpg"
+
+
 class Product(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
     price = models.DecimalField(decimal_places=2, max_digits=10, validators=[MinValueValidator(0.01)])
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='products/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by_seller = models.ForeignKey(Seller, on_delete=models.CASCADE, related_name="all_products")
+
+    @property
+    def img_url(self):
+        if self.image and hasattr(self.image, 'url'):
+            return self.image.url
+        return dummy_img_url
 
     def __str__(self):
         return f"{self.name} - {self.price}"

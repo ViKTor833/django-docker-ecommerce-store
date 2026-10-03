@@ -2,40 +2,33 @@
 
 
 {% block content%}
-
 <div class="py-5">
-    <div class="container px-4 px-lg-5 mt-5 ">
+    <div class="container mt-5">
         <h2>My Products:</h2>
         <br>
         {% for product in products %}
-        <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 justify-content-center d-flex">
-            <div class="card h-100 w-100">
-                <div class="row">
-                    <div class="col-4">
-                        <img class="card-img-left" src="https://dummyimage.com/450x300/dee2e6/6c757d.jpg" alt="..."/>
-                    </div>
-                    <div class="col-5 card-body p-4">
-                        <div class=" text-center">
-                            <h5 class="fw-bolder">{{ product.name}}</h5>
-                            ${{ product.price }}
-                            <br>
-                            <p><small>Category: {{ product.category}}</small></p>
-                            <br>
-                        </div>
-                    </div>
-                    <div class="col p-4 pt-2 border-top-0 bg-transparent text-center">
+        <div class="card h-100 w-100 mb-4">
+            <div class="row g-0">
+                <div class="col-4">
+                    <img class="card-img-custom-small" src="{{ product.img_url }}" alt="{{ product.name }}"/>
+                </div>
+
+                <div class="col-5 card-body p-4">
+                    <div class="text-center">
+                        <h5 class="fw-bolder">{{ product.name }}</h5>
+                        ${{ product.price }}
                         <br>
-                        <div class="row">
-                            <div class="text-center"><a class="btn btn-outline-dark mt-auto"
-                                                        href="{% url 'product_detail' product.id %}">View
-                                details</a></div>
-                        </div>
-                        <br>
+                        <p><small>Category: {{ product.category }}</small></p>
                     </div>
+                </div>
+
+                <div class="col p-4 text-center">
+                    <a class="btn btn-outline-dark mt-auto" href="{% url 'product_detail' product.id %}">
+                        View details
+                    </a>
                 </div>
             </div>
         </div>
-        <br>
         {% endfor %}
     </div>
 </div>
