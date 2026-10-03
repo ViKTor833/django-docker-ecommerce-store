@@ -14,7 +14,7 @@ production application locally via Docker.
 
 * **Architecture:** Hybrid setup supporting traditional Django Templates (Server-Side Rendered) and a Django REST
   Framework (DRF) API.
-* **Backend & Database:** Python, Django 5, PostgreSQL 18, Gunicorn, Whitenoise.
+* **Backend & Database:** Python, Django 5, PostgreSQL 18, Gunicorn, Whitenoise, Nginx.
 * **Authentication:** Djoser (JWT tokens for API) alongside standard session authentication for templates.
 * **DevOps:** Split settings (Dev/Prod), Django Debug Toolbar, and fully containerized via Docker & Docker Compose.
 
@@ -114,7 +114,7 @@ docker compose up --build
 The production setup automatically handles database health-check, migrations, static file collection, and boots
 Gunicorn (2 workers).
 
-- The application will be available at: `http://localhost:8000/`
+- The application will be available at: `http://localhost:8001/`
 - To stop the environment: `docker compose down`
 
 ## Creating an admin user
@@ -129,7 +129,7 @@ docker compose exec web python manage.py createsuperuser
 > The application uses a custom *user_type* field for user_roles, administrator users should have:
 `user_type = A`
 
-The Django admin interface can then be accessed at: `http://localhost:8000/admin/`
+The Django admin interface can then be accessed at: `http://localhost:8001/admin/`
 
 ---
 
